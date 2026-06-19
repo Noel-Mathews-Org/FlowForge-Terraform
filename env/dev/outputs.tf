@@ -3,7 +3,7 @@ output "frontend_url" {
 }
 
 output "app_identity_client_id" {
-  description = "The Workload Identity Client ID to put in values-dev.yaml"
+  description = "The Workload Identity Client ID to put in values-prod.yaml"
   value       = azurerm_user_assigned_identity.app_identity.client_id
 }
 
