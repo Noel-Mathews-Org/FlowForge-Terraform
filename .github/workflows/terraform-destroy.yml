@@ -1,0 +1,172 @@
+name: "Terraform Destroy (Manual)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment to destroy"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+      confirm_environment:
+        description: "Type the environment name again to confirm (must match exactly)"
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_USE_OIDC: true
+
+jobs:
+  validate-input:
+    name: "Validate Confirmation"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm environment match
+        run: |
+          if [[ "${{ inputs.confirm_environment }}" != "${{ inputs.environment }}" ]]; then
+            echo "❌ ABORT: Confirmation text '${{ inputs.confirm_environment }}' does not match selected environment '${{ inputs.environment }}'."
+            echo "You must type the exact environment name to confirm destruction."
+            exit 1
+          fi
+          echo "✅ Confirmation matched: ${{ inputs.environment }}"
+
+  terraform-plan-destroy:
+    name: "Terraform Plan Destroy (${{ inputs.environment }})"
+    runs-on: ubuntu-latest
+    needs: validate-input
+    defaults:
+      run:
+        working-directory: env/${{ inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.4"
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan Destroy
+        id: plan
+        run: |
+          echo "🔴 Planning DESTROY for environment: ${{ inputs.environment }}"
+          terraform plan -destroy -no-color -out=tfplan-destroy 2>&1 | tee plan-output.txt
+
+      - name: Upload Destroy Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-destroy-${{ inputs.environment }}
+          path: env/${{ inputs.environment }}/tfplan-destroy
+          retention-days: 1
+
+      - name: Upload Plan Output
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan-output-${{ inputs.environment }}
+          path: env/${{ inputs.environment }}/plan-output.txt
+          retention-days: 7
+
+  terraform-destroy:
+    name: "Terraform Destroy (${{ inputs.environment }})"
+    runs-on: ubuntu-latest
+    needs: [validate-input, terraform-plan-destroy]
+    # GitHub Environment protection rules act as the approval gate
+    environment: "${{ inputs.environment }}-destroy"
+    defaults:
+      run:
+        working-directory: env/${{ inputs.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Destroy Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-destroy-${{ inputs.environment }}
+          path: env/${{ inputs.environment }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.4"
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: |
+          echo "🔴🔴🔴 DESTROYING environment: ${{ inputs.environment }} 🔴🔴🔴"
+          terraform apply -auto-approve tfplan-destroy
+
+  notify:
+    name: "Notify Team"
+    needs: [terraform-destroy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [[ "${{ needs.terraform-destroy.result }}" == "success" ]]; then
+            echo "EMOJI=🗑️" >> $GITHUB_OUTPUT
+            echo "COLOR=#d9534f" >> $GITHUB_OUTPUT
+            echo "STATUS_TEXT=DESTROYED" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.terraform-destroy.result }}" == "cancelled" ]]; then
+            echo "EMOJI=⚠️" >> $GITHUB_OUTPUT
+            echo "COLOR=#f0ad4e" >> $GITHUB_OUTPUT
+            echo "STATUS_TEXT=CANCELLED" >> $GITHUB_OUTPUT
+          else
+            echo "EMOJI=❌" >> $GITHUB_OUTPUT
+            echo "COLOR=#d9534f" >> $GITHUB_OUTPUT
+            echo "STATUS_TEXT=FAILED" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Notification Email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.DEVELOPMENT_TEAM_EMAIL }}
+          from: FlowForge DevOps <${{ secrets.MAIL_USERNAME }}>
+          subject: "${{ steps.status.outputs.EMOJI }} ${{ steps.status.outputs.STATUS_TEXT }} | Terraform Destroy | ${{ inputs.environment }}"
+          html_body: |
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #ddd;border-radius:8px;overflow:hidden">
+              <div style="background:${{ steps.status.outputs.COLOR }};color:white;padding:20px">
+                <h2 style="margin:0;font-size:20px">${{ steps.status.outputs.EMOJI }} Terraform Destroy ${{ steps.status.outputs.STATUS_TEXT }}</h2>
+                <p style="margin:6px 0 0;opacity:0.9;font-size:14px">Environment: ${{ inputs.environment }} | Triggered by: ${{ github.actor }}</p>
+              </div>
+              <div style="padding:20px">
+                <p style="font-size:14px;color:#333">The <strong>${{ inputs.environment }}</strong> infrastructure has been <strong>${{ steps.status.outputs.STATUS_TEXT }}</strong>.</p>
+                <div style="text-align:center;margin-top:20px">
+                  <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" style="background:#24292e;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;display:inline-block">View Logs</a>
+                </div>
+              </div>
+            </div>
