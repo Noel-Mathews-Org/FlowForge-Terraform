@@ -7,7 +7,7 @@ data "azurerm_resource_group" "main" {
 data "azurerm_client_config" "current" {}
 
 resource "random_string" "suffix" {
-  length  = 5
+  length  = 6
   special = false
   upper   = false
 }
