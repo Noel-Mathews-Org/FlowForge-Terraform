@@ -51,7 +51,7 @@ resource "azurerm_managed_redis" "redis" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   sku_name                      = var.redis_enterprise_sku
-  public_network_access_enabled = false
+  public_network_access = "Disabled"
 
   tags = { Env = var.env, Layer = "data ${var.env}" }
 
