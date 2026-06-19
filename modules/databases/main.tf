@@ -47,10 +47,11 @@ resource "azurerm_private_endpoint" "pe_postgres" {
 
 # Azure Managed Redis
 resource "azurerm_managed_redis" "redis" {
-  name                = var.redis_cache_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  sku_name            = var.redis_enterprise_sku
+  name                          = var.redis_cache_name
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
+  sku_name                      = var.redis_enterprise_sku
+  public_network_access_enabled = false
 
   tags = { Env = var.env, Layer = "data ${var.env}" }
 
