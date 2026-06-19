@@ -15,7 +15,7 @@ resource "random_string" "suffix" {
 module "hub_network" {
   source                 = "../../modules/hub_network"
   resource_group_name    = data.azurerm_resource_group.main.name
-  location               = data.azurerm_resource_group.main.location
+  location               = var.location
   env                    = var.environment
   hub_vnet_cidr          = var.hub_vnet_cidr
   bastion_subnet_cidr    = var.bastion_subnet_cidr
@@ -26,7 +26,7 @@ module "hub_network" {
 module "spoke_network" {
   source                       = "../../modules/spoke_network"
   resource_group_name          = data.azurerm_resource_group.main.name
-  location                     = data.azurerm_resource_group.main.location
+  location                     = var.location
   env                          = var.environment
   spoke_vnet_cidr              = var.spoke_vnet_cidr
   appgw_subnet_cidr            = var.appgw_subnet_cidr
@@ -46,7 +46,7 @@ module "spoke_network" {
 module "firewall" {
   source                     = "../../modules/firewall"
   resource_group_name        = data.azurerm_resource_group.main.name
-  location                   = data.azurerm_resource_group.main.location
+  location                   = var.location
   env                        = var.environment
   hub_vnet_name              = module.hub_network.hub_vnet_name
   fw_subnet_cidr             = var.fw_subnet_cidr
@@ -64,7 +64,7 @@ module "firewall" {
 module "vpn_gateway" {
   source                     = "../../modules/vpn_gateway"
   resource_group_name        = data.azurerm_resource_group.main.name
-  location                   = data.azurerm_resource_group.main.location
+  location                   = var.location
   env                        = var.environment
   hub_vnet_name              = module.hub_network.hub_vnet_name
   gateway_subnet_cidr        = var.gateway_subnet_cidr
@@ -78,7 +78,7 @@ module "vpn_gateway" {
 module "app_gateway" {
   source                     = "../../modules/app_gateway"
   resource_group_name        = data.azurerm_resource_group.main.name
-  location                   = data.azurerm_resource_group.main.location
+  location                   = var.location
   env                        = var.environment
   appgw_subnet_id            = module.spoke_network.appgw_subnet_id
   log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
@@ -87,7 +87,7 @@ module "app_gateway" {
 module "aks" {
   source                     = "../../modules/aks"
   resource_group_name        = data.azurerm_resource_group.main.name
-  location                   = data.azurerm_resource_group.main.location
+  location                   = var.location
   env                        = var.environment
   aks_subnet_id              = module.spoke_network.aks_subnet_id
   appgw_id                   = module.app_gateway.appgw_id
@@ -110,7 +110,7 @@ module "aks" {
 module "databases" {
   source                       = "../../modules/databases"
   resource_group_name          = data.azurerm_resource_group.main.name
-  location                     = data.azurerm_resource_group.main.location
+  location                     = var.location
   env                          = var.environment
   pe_subnet_id                 = module.spoke_network.pe_subnet_id
   private_dns_zone_postgres_id = module.hub_network.private_dns_zone_postgres_id
@@ -130,7 +130,7 @@ module "databases" {
 module "key_vault" {
   source                            = "../../modules/key_vault"
   resource_group_name               = data.azurerm_resource_group.main.name
-  location                          = data.azurerm_resource_group.main.location
+  location                          = var.location
   env                               = var.environment
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_kv_id            = module.hub_network.private_dns_zone_kv_id
@@ -143,7 +143,7 @@ module "key_vault" {
 module "storage" {
   source                            = "../../modules/storage"
   resource_group_name               = data.azurerm_resource_group.main.name
-  location                          = data.azurerm_resource_group.main.location
+  location                          = var.location
   env                               = var.environment
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_storage_id       = module.hub_network.private_dns_zone_storage_id
@@ -198,7 +198,7 @@ module "jumpbox" {
 resource "azurerm_user_assigned_identity" "app_identity" {
   name                = "mi-flowforge-app-${var.environment}"
   resource_group_name = data.azurerm_resource_group.main.name
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
 }
 
 locals {
