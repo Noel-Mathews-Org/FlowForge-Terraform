@@ -13,7 +13,7 @@ resource "azurerm_public_ip" "vpngw_pip" {
   sku                 = "Standard"
   zones               = ["1", "2", "3"]
 
-  tags                = { Env = var.env, Layer = "hub ${var.env}" }
+  tags = { Env = var.env, Layer = "hub ${var.env}" }
 }
 
 resource "azurerm_virtual_network_gateway" "vpngw" {
