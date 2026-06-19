@@ -45,7 +45,37 @@ module "spoke_network" {
   private_dns_zone_aks_id      = module.hub_network.private_dns_zone_aks_id
 }
 
-# Firewall and VPN Gateway are explicitly omitted in Dev
+module "firewall" {
+  source                     = "../../modules/firewall"
+  resource_group_name        = azurerm_resource_group.main.name
+  location                   = azurerm_resource_group.main.location
+  env                        = var.environment
+  hub_vnet_name              = module.hub_network.hub_vnet_name
+  fw_subnet_cidr             = var.fw_subnet_cidr
+  log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
+  aks_subnet_id              = module.spoke_network.aks_subnet_id
+  pe_subnet_id               = module.spoke_network.pe_subnet_id
+  db_subnet_id               = module.spoke_network.db_subnet_id
+  aks_allowed_fqdns          = var.aks_allowed_fqdns
+  hub_vnet_cidr              = var.hub_vnet_cidr
+  spoke_vnet_cidr            = var.spoke_vnet_cidr
+  vpn_client_address_pool    = var.vpn_client_address_pool
+  hub_vnet_id                = module.hub_network.hub_vnet_id
+}
+
+module "vpn_gateway" {
+  source                     = "../../modules/vpn_gateway"
+  resource_group_name        = azurerm_resource_group.main.name
+  location                   = azurerm_resource_group.main.location
+  env                        = var.environment
+  hub_vnet_name              = module.hub_network.hub_vnet_name
+  gateway_subnet_cidr        = var.gateway_subnet_cidr
+  log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
+  vpn_client_address_pool    = var.vpn_client_address_pool
+  entra_tenant_id            = data.azurerm_client_config.current.tenant_id
+  entra_audience             = var.entra_audience
+  depends_on                 = [module.firewall]
+}
 
 module "app_gateway" {
   source                     = "../../modules/app_gateway"
@@ -70,7 +100,13 @@ module "aks" {
   aks_cluster_name           = var.aks_cluster_name
   spoke_resource_group_name  = azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
+  aks_outbound_type          = "userDefinedRouting"
   monitor_workspace_id       = module.hub_network.monitor_workspace_id
+  depends_on = [
+    module.firewall,
+    azurerm_virtual_network_peering.spoke_to_hub,
+    azurerm_virtual_network_peering.hub_to_spoke
+  ]
 }
 
 module "databases" {
@@ -118,7 +154,7 @@ module "storage" {
   storage_account_name              = "${random_string.suffix.result}ff${var.environment}"
 }
 
-# VNet Peering Dev (No VPN Gateway)
+# VNet Peering Prod (With VPN Gateway Dependency)
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   name                         = "peer-spoke-to-hub"
   resource_group_name          = azurerm_resource_group.main.name
@@ -126,7 +162,8 @@ resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   remote_virtual_network_id    = module.hub_network.hub_vnet_id
   allow_virtual_network_access = true
   allow_forwarded_traffic      = true
-  use_remote_gateways          = false
+  use_remote_gateways          = true
+  depends_on                   = [module.vpn_gateway, module.firewall]
 }
 
 resource "azurerm_virtual_network_peering" "hub_to_spoke" {
@@ -136,8 +173,19 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   remote_virtual_network_id    = module.spoke_network.spoke_vnet_id
   allow_virtual_network_access = true
   allow_forwarded_traffic      = true
-  allow_gateway_transit        = false
+  allow_gateway_transit        = true
+  depends_on                   = [module.vpn_gateway, module.firewall]
 }
+
+# Commented out to prevent deployment in lab account
+# module "policies" {
+#   source                     = "../../modules/policies"
+#   env                        = var.environment
+#
+#   location                   = var.location
+#   subscription_id            = var.subscription_id
+#   log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
+# }
 
 module "jumpbox" {
   source              = "../../modules/jumpbox"
@@ -179,13 +227,3 @@ resource "azurerm_role_assignment" "aks_devtest_reader" {
   role_definition_name = "Azure Kubernetes Service RBAC Reader"
   principal_id         = var.devtest_group_object_id
 }
-
-# Commented out to prevent deployment in lab account
-# module "policies" {
-#   source                     = "../../modules/policies"
-#   env                        = var.environment
-#
-#   location                   = var.location
-#   subscription_id            = var.subscription_id
-#   log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
-# }
