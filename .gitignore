@@ -2,8 +2,6 @@
 .terraform/
 *.tfstate
 *.tfstate.backup
-*.tfvars
-.terrafprm.lock.hcl
     
 # Exclude local Terraform plugins
 *.exe

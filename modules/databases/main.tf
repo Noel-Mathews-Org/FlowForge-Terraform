@@ -17,7 +17,7 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   tags = { Env = var.env, Layer = "data ${var.env}" }
 
   lifecycle {
-    ignore_changes = []
+    ignore_changes = [zone]
   }
 }
 
