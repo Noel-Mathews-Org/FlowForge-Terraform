@@ -1,0 +1,9 @@
+# Terraform files and directories to ignore
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terrafprm.lock.hcl
+    
+# Exclude local Terraform plugins
+*.exe
