@@ -74,7 +74,7 @@ resource "azurerm_private_endpoint" "pe_redis" {
     name                           = "psc-redis"
     private_connection_resource_id = azurerm_managed_redis.redis.id
     is_manual_connection           = false
-    subresource_names              = ["redisCache"]
+    subresource_names              = ["redisEnterprise"]
   }
 
   private_dns_zone_group {
