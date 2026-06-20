@@ -30,7 +30,7 @@ entra_audience          = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
 key_vault_name          = "kv-prod-ff-5a2b"
 storage_account_name    = "stffprod5a2b"
 postgres_server_name    = "psql-prod-ff-5a2b"
-redis_cache_name        = "redis-prod-ff-5a2b"
+redis_cache_name        = "redis-prod-ff-5a2c"
 aks_cluster_name        = "aks-prod-5a2b"
 
 devops_group_object_id  = "e0703be8-b8c7-4eab-9c3c-73ffc06843b8"
