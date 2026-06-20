@@ -46,19 +46,21 @@ resource "azurerm_private_endpoint" "pe_postgres" {
   tags = { Env = var.env, Layer = "data ${var.env}" }
 }
 
-# Azure Cache for Redis (Standard)
-resource "azurerm_redis_cache" "redis" {
-  name                          = var.redis_cache_name
-  location                      = var.location
-  resource_group_name           = var.resource_group_name
-  capacity                      = 1
-  family                        = "C"
-  sku_name                      = "Basic"
-  non_ssl_port_enabled          = false
-  minimum_tls_version           = "1.2"
-  public_network_access_enabled = false
+# Azure Managed Redis
+resource "azurerm_managed_redis" "redis" {
+  name                  = var.redis_cache_name
+  location              = var.location
+  resource_group_name   = var.resource_group_name
+  sku_name              = var.redis_enterprise_sku
+  public_network_access = "Disabled"
 
   tags = { Env = var.env, Layer = "data ${var.env}" }
+
+  default_database {
+    clustering_policy                  = "EnterpriseCluster"
+    eviction_policy                    = "VolatileLRU"
+    access_keys_authentication_enabled = true
+  }
 }
 
 # Redis Private Endpoint
@@ -70,7 +72,7 @@ resource "azurerm_private_endpoint" "pe_redis" {
 
   private_service_connection {
     name                           = "psc-redis"
-    private_connection_resource_id = azurerm_redis_cache.redis.id
+    private_connection_resource_id = azurerm_managed_redis.redis.id
     is_manual_connection           = false
     subresource_names              = ["redisCache"]
   }
