@@ -27,11 +27,6 @@ aks_allowed_fqdns = [
 postgres_admin_username = "pgadmin"
 postgres_admin_password = "P@ssw0rd1234!"
 entra_audience          = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-key_vault_name          = "kv-dev-ff-5a2b"
-storage_account_name    = "stffdev5a2b"
-postgres_server_name    = "psql-dev-ff-5a2b"
-redis_cache_name        = "redis-dev-ff-5a2b"
-aks_cluster_name        = "aks-dev-5a2b"
 
 devops_group_object_id  = "e0703be8-b8c7-4eab-9c3c-73ffc06843b8"
 devtest_group_object_id = "97012306-ede4-4162-8b23-be2a2c886b95"

@@ -22,10 +22,6 @@ variable "redis_enterprise_sku" { type = string }
 variable "aks_allowed_fqdns" { type = list(string) }
 variable "postgres_admin_username" { type = string }
 variable "postgres_admin_password" { type = string }
-variable "key_vault_name" { type = string }
-variable "storage_account_name" { type = string }
-variable "postgres_server_name" { type = string }
-variable "redis_cache_name" { type = string }
 
 variable "devops_group_object_id" { type = string }
 variable "devtest_group_object_id" { type = string }
@@ -38,4 +34,3 @@ variable "jumpbox_vm_size" {
   description = "VM size for the jumpbox. Must be available in the target region."
   default     = "Standard_B2s"
 }
-variable "aks_cluster_name" { type = string }

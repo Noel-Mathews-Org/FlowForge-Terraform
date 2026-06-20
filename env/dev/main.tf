@@ -95,7 +95,7 @@ module "aks" {
   log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
   private_dns_zone_id        = module.hub_network.private_dns_zone_aks_id
   aks_vm_size                = var.aks_vm_size
-  aks_cluster_name           = var.aks_cluster_name
+  aks_cluster_name           = "aks-${var.environment}-${random_string.suffix.result}"
   spoke_resource_group_name  = data.azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   aks_outbound_type          = "userDefinedRouting"
@@ -123,8 +123,8 @@ module "databases" {
   log_analytics_workspace_id   = module.hub_network.log_analytics_workspace_id
   postgres_admin_username      = var.postgres_admin_username
   postgres_admin_password      = var.postgres_admin_password
-  postgres_server_name         = var.postgres_server_name
-  redis_cache_name             = var.redis_cache_name
+  postgres_server_name         = "psql-${var.environment}-${random_string.suffix.result}"
+  redis_cache_name             = "redis-${var.environment}-${random_string.suffix.result}"
 }
 
 module "key_vault" {

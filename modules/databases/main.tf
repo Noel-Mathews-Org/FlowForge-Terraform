@@ -9,6 +9,7 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   storage_tier                 = var.postgres_storage_tier
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
+  public_network_access_enabled = false
 
 
   administrator_login    = var.postgres_admin_username
@@ -73,7 +74,7 @@ resource "azurerm_private_endpoint" "pe_redis" {
     name                           = "psc-redis"
     private_connection_resource_id = azurerm_managed_redis.redis.id
     is_manual_connection           = false
-    subresource_names              = ["redisEnterprise"]
+    subresource_names              = ["redisCache"]
   }
 
   private_dns_zone_group {
