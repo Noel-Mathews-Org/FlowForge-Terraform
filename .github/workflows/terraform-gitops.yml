@@ -50,6 +50,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.8.4"
+          terraform_wrapper: false
 
       - name: Terraform Format
         run: terraform fmt -check -recursive
@@ -122,6 +123,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.8.4"
+          terraform_wrapper: false
 
       - name: Azure Login
         uses: azure/login@v2
