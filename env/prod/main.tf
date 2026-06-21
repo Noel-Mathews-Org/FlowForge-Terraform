@@ -129,29 +129,30 @@ module "databases" {
 
 module "key_vault" {
   source                            = "../../modules/key_vault"
+  for_each                          = toset(["dev", "prod"])
   resource_group_name               = data.azurerm_resource_group.main.name
   location                          = var.location
-  env                               = var.environment
+  env                               = each.key
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_kv_id            = module.hub_network.private_dns_zone_kv_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
   tenant_id                         = data.azurerm_client_config.current.tenant_id
   aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity.principal_id
-  key_vault_name                    = "kv-${var.environment}-${random_string.suffix.result}"
+  key_vault_name                    = "kv-${each.key}-${random_string.suffix.result}"
 }
 
 module "storage" {
   source                            = "../../modules/storage"
+  for_each                          = toset(["dev", "prod"])
   resource_group_name               = data.azurerm_resource_group.main.name
   location                          = var.location
-  env                               = var.environment
+  env                               = each.key
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_storage_id       = module.hub_network.private_dns_zone_storage_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
   aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity.principal_id
-  storage_account_name              = "${random_string.suffix.result}ff${var.environment}"
+  storage_account_name              = "${random_string.suffix.result}ff${each.key}"
 }
-
 # VNet Peering Prod (With VPN Gateway Dependency)
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   name                         = "peer-spoke-to-hub"
@@ -203,15 +204,67 @@ resource "azurerm_user_assigned_identity" "app_identity" {
 
 locals {
   microservices = ["frontend", "gateway", "auth-service", "project-service", "task-service", "analysis-service", "notification-worker"]
+  environments  = ["dev", "prod"]
+  fid_combinations = flatten([
+    for env in local.environments : [
+      for svc in local.microservices : {
+        env = env
+        svc = svc
+      }
+    ]
+  ])
 }
 
 resource "azurerm_federated_identity_credential" "app_fid" {
-  for_each                  = toset(local.microservices)
-  name                      = "fid-flowforge-${each.key}"
-  audience                  = ["api://AzureADTokenExchange"]
-  issuer                    = module.aks.oidc_issuer_url
-  user_assigned_identity_id = azurerm_user_assigned_identity.app_identity.id
-  subject                   = "system:serviceaccount:flowforge:flowforge-${var.environment}-${each.key}"
+  for_each            = { for combo in local.fid_combinations : "${combo.env}-${combo.svc}" => combo }
+  name                = "fid-flowforge-${each.key}"
+  resource_group_name = data.azurerm_resource_group.main.name
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = module.aks.oidc_issuer_url
+  parent_id           = azurerm_user_assigned_identity.app_identity.id
+  subject             = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
+}
+
+# ACR Provisioning
+resource "azurerm_container_registry" "acr" {
+  name                = "flowforgeacr${random_string.suffix.result}"
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+  sku                 = "Standard"
+  admin_enabled       = false
+}
+
+resource "azurerm_role_assignment" "aks_acr_pull" {
+  scope                = azurerm_container_registry.acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = module.aks.kubelet_identity_object_id
+}
+
+# GitHub Actions OIDC
+resource "azurerm_user_assigned_identity" "github_actions" {
+  name                = "mi-github-actions-prod"
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+}
+
+resource "azurerm_role_assignment" "github_acr_push" {
+  scope                = azurerm_container_registry.acr.id
+  role_definition_name = "AcrPush"
+  principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
+}
+
+locals {
+  github_branches = ["Cloud-Track-dev", "main"]
+}
+
+resource "azurerm_federated_identity_credential" "github_fid" {
+  for_each            = toset(local.github_branches)
+  name                = "fid-github-${each.key}"
+  resource_group_name = data.azurerm_resource_group.main.name
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = "https://token.actions.githubusercontent.com"
+  parent_id           = azurerm_user_assigned_identity.github_actions.id
+  subject             = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
 }
 
 resource "azurerm_role_assignment" "aks_cluster_admin" {

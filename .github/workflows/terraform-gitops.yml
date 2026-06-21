@@ -68,18 +68,26 @@ jobs:
       - name: Terraform Validate
         run: terraform validate -no-color
 
-      - name: Run Snyk IaC scan
-        uses: snyk/actions/setup@master
-      - name: Snyk IaC test
-        run: snyk iac test . || true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        working-directory: .
-
       - name: Terraform Plan
         id: plan
         run: terraform plan -parallelism=30 -no-color -out=tfplan
         
+      - name: Run Checkov Security Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: env/${{ needs.determine-env.outputs.env_name }}
+          framework: terraform
+          soft_fail: true # Allows the pipeline to reach the manual approval gate even if issues are found
+          
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          
+      - name: Run Infracost Cost Estimate
+        run: |
+          terraform show -json tfplan > plan.json
+          infracost breakdown --path plan.json --format table
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:

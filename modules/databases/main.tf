@@ -22,6 +22,21 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   }
 }
 
+resource "azurerm_postgresql_flexible_server_database" "db_dev" {
+  name      = "flowforge-dev"
+  server_id = azurerm_postgresql_flexible_server.postgres.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+
+resource "azurerm_postgresql_flexible_server_database" "db_prod" {
+  name      = "flowforge-prod"
+  server_id = azurerm_postgresql_flexible_server.postgres.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+
+
 # Active directory administrator removed per user request
 
 # PostgreSQL Private Endpoint

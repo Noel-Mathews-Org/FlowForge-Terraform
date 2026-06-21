@@ -22,12 +22,6 @@ resource "azurerm_role_assignment" "aks_kv_secrets_user" {
   principal_id         = var.aks_managed_identity_principal_id
 }
 
-# Role Assignment for Current User as Administrator
-resource "azurerm_role_assignment" "user_kv_admin" {
-  scope                = azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Administrator"
-  principal_id         = data.azurerm_client_config.current.object_id
-}
 
 # Key Vault Private Endpoint
 resource "azurerm_private_endpoint" "pe_kv" {
