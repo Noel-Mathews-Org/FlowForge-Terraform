@@ -42,6 +42,7 @@ module "spoke_network" {
   private_dns_zone_postgres_id = module.hub_network.private_dns_zone_postgres_id
   private_dns_zone_redis_id    = module.hub_network.private_dns_zone_redis_id
   private_dns_zone_aks_id      = module.hub_network.private_dns_zone_aks_id
+  vpn_client_address_pool      = var.vpn_client_address_pool
   tags                         = var.tags
 }
 
@@ -61,6 +62,7 @@ module "firewall" {
   spoke_vnet_cidr            = var.spoke_vnet_cidr
   vpn_client_address_pool    = var.vpn_client_address_pool
   hub_vnet_id                = module.hub_network.hub_vnet_id
+  aks_subnet_cidr            = var.aks_subnet_cidr
   tags                       = var.tags
 }
 
@@ -104,7 +106,6 @@ module "aks" {
   spoke_resource_group_name  = data.azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   aks_outbound_type          = "userDefinedRouting"
-  monitor_workspace_id       = module.hub_network.monitor_workspace_id
   depends_on = [
     module.firewall,
     azurerm_virtual_network_peering.spoke_to_hub,
@@ -119,6 +120,7 @@ module "databases" {
   location                     = var.location
   env                          = var.environment
   pe_subnet_id                 = module.spoke_network.pe_subnet_id
+  db_subnet_id                 = module.spoke_network.db_subnet_id
   private_dns_zone_postgres_id = module.hub_network.private_dns_zone_postgres_id
   private_dns_zone_redis_id    = module.hub_network.private_dns_zone_redis_id
   postgres_sku                 = var.postgres_sku
