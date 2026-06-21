@@ -135,31 +135,31 @@ module "databases" {
 }
 
 module "key_vault" {
-  source                            = "../../modules/key_vault"
-  for_each                          = toset(["dev", "prod"])
+  source = "../../modules/key_vault"
+
   resource_group_name               = data.azurerm_resource_group.main.name
   location                          = var.location
-  env                               = each.key
+  env                               = var.environment
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_kv_id            = module.hub_network.private_dns_zone_kv_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
   tenant_id                         = data.azurerm_client_config.current.tenant_id
   aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity.principal_id
-  key_vault_name                    = "kv-${each.key}-${random_string.suffix.result}"
+  key_vault_name                    = "kv-${var.environment}-${random_string.suffix.result}"
   tags                              = var.tags
 }
 
 module "storage" {
-  source                            = "../../modules/storage"
-  for_each                          = toset(["dev", "prod"])
+  source = "../../modules/storage"
+
   resource_group_name               = data.azurerm_resource_group.main.name
   location                          = var.location
-  env                               = each.key
+  env                               = var.environment
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_storage_id       = module.hub_network.private_dns_zone_storage_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
   aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity.principal_id
-  storage_account_name              = "${random_string.suffix.result}ff${each.key}"
+  storage_account_name              = "${random_string.suffix.result}ff${var.environment}"
   tags                              = var.tags
 }
 # VNet Peering Prod (With VPN Gateway Dependency)
@@ -226,12 +226,12 @@ locals {
 }
 
 resource "azurerm_federated_identity_credential" "app_fid" {
-  for_each  = { for combo in local.fid_combinations : "${combo.env}-${combo.svc}" => combo }
-  name      = "fid-flowforge-${each.key}"
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = module.aks.oidc_issuer_url
-  parent_id = azurerm_user_assigned_identity.app_identity.id
-  subject   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
+  for_each                  = { for combo in local.fid_combinations : "${combo.env}-${combo.svc}" => combo }
+  name                      = "fid-flowforge-${each.key}"
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = module.aks.oidc_issuer_url
+  user_assigned_identity_id = azurerm_user_assigned_identity.app_identity.id
+  subject                   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
 }
 
 # ACR Provisioning
@@ -267,12 +267,12 @@ locals {
 }
 
 resource "azurerm_federated_identity_credential" "github_fid" {
-  for_each  = toset(local.github_branches)
-  name      = "fid-github-${each.key}"
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = "https://token.actions.githubusercontent.com"
-  parent_id = azurerm_user_assigned_identity.github_actions.id
-  subject   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
+  for_each                  = toset(local.github_branches)
+  name                      = "fid-github-${each.key}"
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = "https://token.actions.githubusercontent.com"
+  user_assigned_identity_id = azurerm_user_assigned_identity.github_actions.id
+  subject                   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
 }
 
 resource "azurerm_role_assignment" "aks_cluster_admin" {
