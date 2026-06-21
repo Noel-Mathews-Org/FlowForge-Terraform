@@ -24,6 +24,9 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   ARM_USE_OIDC: true
+  TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
+  TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+  TF_VAR_jumpbox_admin_password: ${{ secrets.JUMPBOX_ADMIN_PASSWORD }}
 
 jobs:
   validate-input:
@@ -68,6 +71,7 @@ jobs:
       - name: Terraform Plan Destroy
         id: plan
         run: |
+          set -o pipefail
           echo "🔴 Planning DESTROY for environment: ${{ inputs.environment }}"
           terraform plan -parallelism=30 -destroy -no-color -out=tfplan-destroy 2>&1 | tee plan-output.txt
 

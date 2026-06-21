@@ -62,7 +62,7 @@ The App Registration needs explicit permissions to interact with your Azure envi
    - Go to your specific Resource Group (e.g., `Noel-RG-Prod`) -> **Access control (IAM)** -> **Add role assignment**.
    - Select the **Role Based Access Control Administrator** role.
    - Select **User, group, or service principal**.
-   - Search for your App Registration (Tip: Paste the **Application (client) ID**) and assign the role.
+   - Search for your App Registration in Enterprise Application and copy the object ID and assign the role.
 
 2. **Contributor Role (Infrastructure Provisioning)**
    - Repeat the steps above on the exact same Resource Group, but assign the **Contributor** role so Terraform can build/modify resources inside it.
