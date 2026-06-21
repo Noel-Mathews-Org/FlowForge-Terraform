@@ -98,7 +98,7 @@ resource "azurerm_network_security_group" "aks_nsg" {
     destination_address_prefix = "*"
   }
 
-  tags                = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = { Env = var.env, Layer = "spoke ${var.env}" }
 }
 
 resource "azurerm_subnet_network_security_group_association" "aks_nsg_assoc" {
@@ -123,7 +123,7 @@ resource "azurerm_network_security_group" "pe_nsg" {
     destination_address_prefix = "*"
   }
 
-  tags                = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = { Env = var.env, Layer = "spoke ${var.env}" }
 }
 
 resource "azurerm_subnet_network_security_group_association" "pe_nsg_assoc" {
@@ -148,7 +148,7 @@ resource "azurerm_network_security_group" "db_nsg" {
     destination_address_prefix = "*"
   }
 
-  tags                = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = { Env = var.env, Layer = "spoke ${var.env}" }
 }
 
 resource "azurerm_subnet_network_security_group_association" "db_nsg_assoc" {
