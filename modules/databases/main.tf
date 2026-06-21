@@ -13,11 +13,10 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   private_dns_zone_id           = var.private_dns_zone_postgres_id
   zone                          = "2"
 
-  high_availability {
-    mode                      = "ZoneRedundant"
-    standby_availability_zone = "3"
-  }
-
+  # high_availability {
+  #   mode                      = "ZoneRedundant"
+  #   standby_availability_zone = "3"
+  # }
 
   administrator_login    = var.postgres_admin_username
   administrator_password = var.postgres_admin_password
