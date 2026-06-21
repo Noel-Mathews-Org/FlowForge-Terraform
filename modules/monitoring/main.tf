@@ -1,3 +1,14 @@
+resource "azurerm_monitor_action_group" "main" {
+  name                = "ag-flowforge-${var.env}"
+  resource_group_name = var.resource_group_name
+  short_name          = "ff-alerts"
+
+  email_receiver {
+    name          = "sendtoadmin"
+    email_address = var.alert_email
+  }
+}
+
 resource "azurerm_monitor_metric_alert" "appgw_5xx" {
   name                = "alert-appgw-5xx-${var.env}"
   resource_group_name = var.resource_group_name
@@ -10,6 +21,10 @@ resource "azurerm_monitor_metric_alert" "appgw_5xx" {
     aggregation      = "Total"
     operator         = "GreaterThan"
     threshold        = 10
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.main.id
   }
 }
 
@@ -26,6 +41,10 @@ resource "azurerm_monitor_metric_alert" "postgres_cpu" {
     operator         = "GreaterThan"
     threshold        = 80
   }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.main.id
+  }
 }
 
 resource "azurerm_monitor_metric_alert" "redis_memory" {
@@ -41,6 +60,10 @@ resource "azurerm_monitor_metric_alert" "redis_memory" {
     operator         = "GreaterThan"
     threshold        = 80
   }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.main.id
+  }
 }
 
 resource "azurerm_monitor_metric_alert" "kv_availability" {
@@ -55,5 +78,9 @@ resource "azurerm_monitor_metric_alert" "kv_availability" {
     aggregation      = "Average"
     operator         = "LessThan"
     threshold        = 100
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.main.id
   }
 }

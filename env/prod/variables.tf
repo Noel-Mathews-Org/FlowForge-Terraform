@@ -118,3 +118,7 @@ variable "tags" {
   description = "Tags to apply to resources"
 }
 
+variable "alert_email" {
+  type        = string
+  description = "Email address for Azure Monitor alerts"
+}

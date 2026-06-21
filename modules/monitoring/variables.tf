@@ -4,3 +4,4 @@ variable "appgw_id" { type = string }
 variable "postgres_id" { type = string }
 variable "redis_id" { type = string }
 variable "kv_id" { type = string }
+variable "alert_email" { type = string }

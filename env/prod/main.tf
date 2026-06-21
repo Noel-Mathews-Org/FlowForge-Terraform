@@ -142,6 +142,7 @@ module "monitoring" {
   postgres_id         = module.databases.postgres_id
   redis_id            = module.databases.redis_id
   kv_id               = module.key_vault["prod"].kv_id
+  alert_email         = var.alert_email
 }
 
 module "key_vault" {
@@ -296,5 +297,17 @@ resource "azurerm_role_assignment" "aks_cluster_admin" {
 resource "azurerm_role_assignment" "aks_devtest_reader" {
   scope                = "${module.aks.aks_id}/namespaces/flowforge"
   role_definition_name = "Azure Kubernetes Service RBAC Reader"
+  principal_id         = var.devtest_group_object_id
+}
+
+resource "azurerm_role_assignment" "log_analytics_devops_reader" {
+  scope                = module.hub_network.log_analytics_workspace_id
+  role_definition_name = "Log Analytics Reader"
+  principal_id         = var.devops_group_object_id
+}
+
+resource "azurerm_role_assignment" "log_analytics_devtest_reader" {
+  scope                = module.hub_network.log_analytics_workspace_id
+  role_definition_name = "Log Analytics Reader"
   principal_id         = var.devtest_group_object_id
 }

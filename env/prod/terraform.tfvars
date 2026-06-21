@@ -24,8 +24,10 @@ aks_allowed_fqdns = [
   "github.com", "api.github.com", "*.quay.io", "quay.io", "*.letsencrypt.org", "letsencrypt.org", "*.k8s.io", "registry.k8s.io",
   "*.azmk8s.io", "login.microsoftonline.com", "packages.microsoft.com", "*.data.mcr.microsoft.com", "*.cdn.mscr.io", "acs-mirror.azureedge.net",
   "*.ecr.aws", "public.ecr.aws", "*.cloudfront.net",
-  "*.monitor.azure.com", "*.in.applicationinsights.azure.com", "dc.services.visualstudio.com"
+  "*.monitor.azure.com", "*.in.applicationinsights.azure.com", "dc.services.visualstudio.com",
+  "*.grafana.com", "*.github.io"
 ]
+alert_email             = "noelmathews123@gmail.com"
 devops_group_object_id  = "e0703be8-b8c7-4eab-9c3c-73ffc06843b8"
 devtest_group_object_id = "97012306-ede4-4162-8b23-be2a2c886b95"
 jumpbox_vm_size         = "Standard_B2ls_v2"
