@@ -34,3 +34,9 @@ variable "jumpbox_vm_size" {
   description = "VM size for the jumpbox. Must be available in the target region."
   default     = "Standard_B2s"
 }
+
+variable "owner" {
+  type        = string
+  description = "Owner of the resources"
+}
+
