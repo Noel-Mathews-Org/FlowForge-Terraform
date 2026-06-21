@@ -24,10 +24,6 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   ARM_USE_OIDC: true
-  TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
-  TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-  TF_VAR_jumpbox_admin_password: ${{ secrets.JUMPBOX_ADMIN_PASSWORD }}
-
 jobs:
   validate-input:
     name: "Validate Confirmation"
@@ -46,6 +42,11 @@ jobs:
     name: "Terraform Plan Destroy (${{ inputs.environment }})"
     runs-on: ubuntu-latest
     needs: validate-input
+    environment: ${{ inputs.environment }}
+    env:
+      TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
+      TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+      TF_VAR_jumpbox_admin_password: ${{ secrets.JUMPBOX_ADMIN_PASSWORD }}
     defaults:
       run:
         working-directory: env/${{ inputs.environment }}
@@ -94,7 +95,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-input, terraform-plan-destroy]
     # GitHub Environment protection rules act as the approval gate
-    environment: "${{ inputs.environment }}-destroy"
+    environment: "${{ inputs.environment }}"
+    env:
+      TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
+      TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+      TF_VAR_jumpbox_admin_password: ${{ secrets.JUMPBOX_ADMIN_PASSWORD }}
     defaults:
       run:
         working-directory: env/${{ inputs.environment }}
