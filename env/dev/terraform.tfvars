@@ -1,4 +1,4 @@
-environment = "dev"
+environment             = "dev"
 domain                  = "flowforge.fun"
 location                = "centralus"
 hub_vnet_cidr           = "192.168.0.0/20"
@@ -32,3 +32,7 @@ devops_group_object_id  = "e0703be8-b8c7-4eab-9c3c-73ffc06843b8"
 devtest_group_object_id = "97012306-ede4-4162-8b23-be2a2c886b95"
 jumpbox_admin_password  = "P@ssw0rdJumpb0x!"
 jumpbox_vm_size         = "Standard_D2s_v3"
+tags = {
+  Project = "FlowForge"
+  Owner   = "noel.mathews@flowforge.fun"
+}

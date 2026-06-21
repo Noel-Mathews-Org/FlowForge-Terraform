@@ -9,10 +9,10 @@ resource "azurerm_network_interface" "jumpbox_nic" {
     private_ip_address_allocation = "Dynamic"
   }
 
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 resource "azurerm_linux_virtual_machine" "jumpbox" {
@@ -41,8 +41,8 @@ resource "azurerm_linux_virtual_machine" "jumpbox" {
     version   = "latest"
   }
 
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }

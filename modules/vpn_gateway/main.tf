@@ -13,7 +13,7 @@ resource "azurerm_public_ip" "vpngw_pip" {
   sku                 = "Standard"
   zones               = ["1", "2", "3"]
 
-  tags = { Env = var.env, Layer = "hub ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "hub ${var.env}" }, var.tags)
 }
 
 resource "azurerm_virtual_network_gateway" "vpngw" {
@@ -44,6 +44,6 @@ resource "azurerm_virtual_network_gateway" "vpngw" {
     aad_issuer           = "https://sts.windows.net/${var.entra_tenant_id}/"
   }
 
-  tags = { Env = var.env, Layer = "hub ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "hub ${var.env}" }, var.tags)
 }
 

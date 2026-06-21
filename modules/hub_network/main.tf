@@ -3,10 +3,10 @@ resource "azurerm_virtual_network" "hub" {
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = [var.hub_vnet_cidr]
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 resource "azurerm_subnet" "bastion" {
@@ -29,10 +29,10 @@ resource "azurerm_log_analytics_workspace" "law" {
   resource_group_name = var.resource_group_name
   sku                 = "PerGB2018"
   retention_in_days   = 30
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 resource "azurerm_application_insights" "appinsights" {
@@ -41,10 +41,10 @@ resource "azurerm_application_insights" "appinsights" {
   resource_group_name = var.resource_group_name
   workspace_id        = azurerm_log_analytics_workspace.law.id
   application_type    = "web"
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 resource "azurerm_private_dns_zone" "aks" {
@@ -64,10 +64,10 @@ resource "azurerm_monitor_workspace" "amw" {
   name                = "amw-${var.env}-hub"
   resource_group_name = var.resource_group_name
   location            = var.location
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 resource "azurerm_dashboard_grafana" "grafana" {
@@ -87,10 +87,10 @@ resource "azurerm_dashboard_grafana" "grafana" {
     resource_id = azurerm_monitor_workspace.amw.id
   }
 
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 resource "azurerm_role_assignment" "grafana_monitoring_reader" {

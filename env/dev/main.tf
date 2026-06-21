@@ -21,6 +21,7 @@ module "hub_network" {
   bastion_subnet_cidr    = var.bastion_subnet_cidr
   management_subnet_cidr = var.management_subnet_cidr
   devops_group_object_id = var.devops_group_object_id
+  tags                   = var.tags
 }
 
 module "spoke_network" {
@@ -41,6 +42,7 @@ module "spoke_network" {
   private_dns_zone_postgres_id = module.hub_network.private_dns_zone_postgres_id
   private_dns_zone_redis_id    = module.hub_network.private_dns_zone_redis_id
   private_dns_zone_aks_id      = module.hub_network.private_dns_zone_aks_id
+  tags                         = var.tags
 }
 
 module "firewall" {
@@ -59,6 +61,7 @@ module "firewall" {
   spoke_vnet_cidr            = var.spoke_vnet_cidr
   vpn_client_address_pool    = var.vpn_client_address_pool
   hub_vnet_id                = module.hub_network.hub_vnet_id
+  tags                       = var.tags
 }
 
 module "vpn_gateway" {
@@ -73,6 +76,7 @@ module "vpn_gateway" {
   entra_tenant_id            = data.azurerm_client_config.current.tenant_id
   entra_audience             = var.entra_audience
   depends_on                 = [module.firewall]
+  tags                       = var.tags
 }
 
 module "app_gateway" {
@@ -82,6 +86,7 @@ module "app_gateway" {
   env                        = var.environment
   appgw_subnet_id            = module.spoke_network.appgw_subnet_id
   log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
+  tags                       = var.tags
 }
 
 module "aks" {
@@ -105,6 +110,7 @@ module "aks" {
     azurerm_virtual_network_peering.spoke_to_hub,
     azurerm_virtual_network_peering.hub_to_spoke
   ]
+  tags = var.tags
 }
 
 module "databases" {
@@ -125,6 +131,7 @@ module "databases" {
   postgres_admin_password      = var.postgres_admin_password
   postgres_server_name         = "psql-${var.environment}-${random_string.suffix.result}"
   redis_cache_name             = "redis-${var.environment}-${random_string.suffix.result}"
+  tags                         = var.tags
 }
 
 module "key_vault" {
@@ -139,6 +146,7 @@ module "key_vault" {
   tenant_id                         = data.azurerm_client_config.current.tenant_id
   aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity.principal_id
   key_vault_name                    = "kv-${each.key}-${random_string.suffix.result}"
+  tags                              = var.tags
 }
 
 module "storage" {
@@ -152,6 +160,7 @@ module "storage" {
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
   aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity.principal_id
   storage_account_name              = "${random_string.suffix.result}ff${each.key}"
+  tags                              = var.tags
 }
 # VNet Peering Prod (With VPN Gateway Dependency)
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
@@ -194,6 +203,7 @@ module "jumpbox" {
   subnet_id           = module.hub_network.management_subnet_id
   admin_password      = var.jumpbox_admin_password
   vm_size             = var.jumpbox_vm_size
+  tags                = var.tags
 }
 
 resource "azurerm_user_assigned_identity" "app_identity" {

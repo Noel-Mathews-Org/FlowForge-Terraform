@@ -63,7 +63,7 @@ resource "azurerm_application_gateway" "appgw" {
 
   firewall_policy_id = azurerm_web_application_firewall_policy.waf.id
 
-  tags = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "spoke ${var.env}" }, var.tags)
 
   # Ignore changes made by AGIC
   lifecycle {
@@ -100,6 +100,6 @@ resource "azurerm_web_application_firewall_policy" "waf" {
     }
   }
 
-  tags = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "spoke ${var.env}" }, var.tags)
 }
 

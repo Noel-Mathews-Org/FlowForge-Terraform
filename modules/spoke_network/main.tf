@@ -3,10 +3,10 @@ resource "azurerm_virtual_network" "spoke" {
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = [var.spoke_vnet_cidr]
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "spoke ${var.env}"
-  }
+  }, var.tags)
 }
 
 # Subnets
@@ -68,7 +68,7 @@ resource "azurerm_network_security_group" "appgw_nsg" {
     source_address_prefix      = "Internet"
     destination_address_prefix = "*"
   }
-  tags = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "spoke ${var.env}" }, var.tags)
 }
 
 resource "azurerm_subnet_network_security_group_association" "appgw_nsg_assoc" {

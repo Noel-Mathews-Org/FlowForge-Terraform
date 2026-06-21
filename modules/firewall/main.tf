@@ -39,7 +39,7 @@ resource "azurerm_firewall" "fw" {
     public_ip_address_id = azurerm_public_ip.fw_pip.id
   }
 
-  tags = { Env = var.env, Layer = "hub ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "hub ${var.env}" }, var.tags)
 }
 
 resource "azurerm_virtual_network_dns_servers" "hub_dns" {
@@ -150,7 +150,7 @@ resource "azurerm_route_table" "spoke_rt" {
     next_hop_in_ip_address = azurerm_firewall.fw.ip_configuration[0].private_ip_address
   }
 
-  tags = { Env = var.env, Layer = "hub ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "hub ${var.env}" }, var.tags)
 }
 
 # Route Table Associations

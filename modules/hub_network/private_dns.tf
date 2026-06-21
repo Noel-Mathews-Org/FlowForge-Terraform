@@ -2,40 +2,40 @@
 resource "azurerm_private_dns_zone" "kv" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = var.resource_group_name
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 # Storage Account Blob DNS Zone
 resource "azurerm_private_dns_zone" "storage" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = var.resource_group_name
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 # PostgreSQL Flexible Server DNS Zone
 resource "azurerm_private_dns_zone" "postgres" {
   name                = "privatelink.postgres.database.azure.com"
   resource_group_name = var.resource_group_name
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 # Redis DNS Zone
 resource "azurerm_private_dns_zone" "redis" {
   name                = "privatelink.redis.azure.net"
   resource_group_name = var.resource_group_name
-  tags = {
+  tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
-  }
+  }, var.tags)
 }
 
 # Link all zones to Hub VNet

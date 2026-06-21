@@ -12,7 +12,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name                      = "standard"
   rbac_authorization_enabled    = true
 
-  tags = { Env = var.env, Layer = "data ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 }
 
 # Role Assignment for AKS to read secrets
@@ -42,7 +42,7 @@ resource "azurerm_private_endpoint" "pe_kv" {
     private_dns_zone_ids = [var.private_dns_zone_kv_id]
   }
 
-  tags = { Env = var.env, Layer = "data ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 }
 
 # Diagnostic settings for Key Vault -> Log Analytics

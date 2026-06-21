@@ -11,3 +11,8 @@ variable "vm_size" {
   description = "The Azure VM size for the jumpbox. Must be available in the target region. Defaults to Standard_B2s which is broadly available in Canada Central."
   default     = "Standard_B2s"
 }
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

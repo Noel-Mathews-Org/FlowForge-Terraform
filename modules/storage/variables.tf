@@ -6,3 +6,8 @@ variable "private_dns_zone_storage_id" { type = string }
 variable "log_analytics_workspace_id" { type = string }
 variable "aks_managed_identity_principal_id" { type = string }
 variable "storage_account_name" { type = string }
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

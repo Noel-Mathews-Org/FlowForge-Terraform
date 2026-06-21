@@ -7,3 +7,8 @@ variable "log_analytics_workspace_id" { type = string }
 variable "tenant_id" { type = string }
 variable "aks_managed_identity_principal_id" { type = string }
 variable "key_vault_name" { type = string }
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

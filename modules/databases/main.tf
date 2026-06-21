@@ -15,7 +15,7 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   administrator_login    = var.postgres_admin_username
   administrator_password = var.postgres_admin_password
 
-  tags = { Env = var.env, Layer = "data ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 
   lifecycle {
     ignore_changes = [zone]
@@ -58,7 +58,7 @@ resource "azurerm_private_endpoint" "pe_postgres" {
     private_dns_zone_ids = [var.private_dns_zone_postgres_id]
   }
 
-  tags = { Env = var.env, Layer = "data ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 }
 
 # Azure Managed Redis
@@ -69,7 +69,7 @@ resource "azurerm_managed_redis" "redis" {
   sku_name              = var.redis_enterprise_sku
   public_network_access = "Disabled"
 
-  tags = { Env = var.env, Layer = "data ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 
   default_database {
     clustering_policy                  = "EnterpriseCluster"
@@ -97,7 +97,7 @@ resource "azurerm_private_endpoint" "pe_redis" {
     private_dns_zone_ids = [var.private_dns_zone_redis_id]
   }
 
-  tags = { Env = var.env, Layer = "data ${var.env}" }
+  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 }
 
 # Diagnostic settings for PostgreSQL -> Log Analytics
