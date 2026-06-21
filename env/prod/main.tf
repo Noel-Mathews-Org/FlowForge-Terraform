@@ -299,15 +299,3 @@ resource "azurerm_role_assignment" "aks_devtest_reader" {
   role_definition_name = "Azure Kubernetes Service RBAC Reader"
   principal_id         = var.devtest_group_object_id
 }
-
-resource "azurerm_role_assignment" "log_analytics_devops_reader" {
-  scope                = module.hub_network.log_analytics_workspace_id
-  role_definition_name = "Log Analytics Reader"
-  principal_id         = var.devops_group_object_id
-}
-
-resource "azurerm_role_assignment" "log_analytics_devtest_reader" {
-  scope                = module.hub_network.log_analytics_workspace_id
-  role_definition_name = "Log Analytics Reader"
-  principal_id         = var.devtest_group_object_id
-}
