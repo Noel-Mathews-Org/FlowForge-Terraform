@@ -72,7 +72,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     secret_rotation_interval = "5m"
   }
 
-  tags = merge({ Env = var.env, Layer = "spoke ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "spoke" }, var.tags)
 }
 
 data "azurerm_client_config" "current" {}

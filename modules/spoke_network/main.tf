@@ -5,7 +5,7 @@ resource "azurerm_virtual_network" "spoke" {
   address_space       = [var.spoke_vnet_cidr]
   tags = merge({
     Env   = var.env
-    Layer = "spoke ${var.env}"
+    Layer = "spoke"
   }, var.tags)
 }
 
@@ -73,7 +73,7 @@ resource "azurerm_network_security_group" "appgw_nsg" {
     source_address_prefix      = "Internet"
     destination_address_prefix = "*"
   }
-  tags = merge({ Env = var.env, Layer = "spoke ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "spoke" }, var.tags)
 }
 
 resource "azurerm_subnet_network_security_group_association" "appgw_nsg_assoc" {
@@ -98,7 +98,7 @@ resource "azurerm_network_security_group" "aks_nsg" {
     destination_address_prefix = "*"
   }
 
-  tags = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = { Env = var.env, Layer = "spoke" }
 }
 
 resource "azurerm_subnet_network_security_group_association" "aks_nsg_assoc" {
@@ -123,7 +123,7 @@ resource "azurerm_network_security_group" "pe_nsg" {
     destination_address_prefix = "*"
   }
 
-  tags = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = { Env = var.env, Layer = "spoke" }
 }
 
 resource "azurerm_subnet_network_security_group_association" "pe_nsg_assoc" {
@@ -148,7 +148,7 @@ resource "azurerm_network_security_group" "db_nsg" {
     destination_address_prefix = "*"
   }
 
-  tags = { Env = var.env, Layer = "spoke ${var.env}" }
+  tags = { Env = var.env, Layer = "spoke" }
 }
 
 resource "azurerm_subnet_network_security_group_association" "db_nsg_assoc" {

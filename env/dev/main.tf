@@ -253,7 +253,7 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
 
 # GitHub Actions OIDC
 resource "azurerm_user_assigned_identity" "github_actions" {
-  name                = "mi-github-actions-prod"
+  name                = "mi-github-actions-dev"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.location
 }

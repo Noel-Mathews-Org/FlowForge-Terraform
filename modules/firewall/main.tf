@@ -11,7 +11,7 @@ resource "azurerm_public_ip" "fw_pip" {
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
-  tags                = { Env = var.env, Layer = "hub ${var.env}" }
+  tags                = { Env = var.env, Layer = "hub" }
 }
 
 resource "azurerm_firewall_policy" "fw_policy" {
@@ -39,7 +39,7 @@ resource "azurerm_firewall" "fw" {
     public_ip_address_id = azurerm_public_ip.fw_pip.id
   }
 
-  tags = merge({ Env = var.env, Layer = "hub ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "hub" }, var.tags)
 }
 
 resource "azurerm_virtual_network_dns_servers" "hub_dns" {
@@ -113,6 +113,13 @@ resource "azurerm_firewall_policy_rule_collection_group" "fw_policy_rcg" {
       protocols             = ["TCP"]
     }
     rule {
+      name                  = "AllowAKS_SMTP"
+      source_addresses      = [var.aks_subnet_cidr]
+      destination_addresses = ["*"]
+      destination_ports     = ["465", "587"]
+      protocols             = ["TCP"]
+    }
+    rule {
       name                  = "AllowNTP"
       source_addresses      = [var.aks_subnet_cidr]
       destination_addresses = ["*"]
@@ -150,7 +157,7 @@ resource "azurerm_route_table" "spoke_rt" {
     next_hop_in_ip_address = azurerm_firewall.fw.ip_configuration[0].private_ip_address
   }
 
-  tags = merge({ Env = var.env, Layer = "hub ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "hub" }, var.tags)
 }
 
 

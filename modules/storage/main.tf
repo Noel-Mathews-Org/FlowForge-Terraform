@@ -7,7 +7,7 @@ resource "azurerm_storage_account" "sa" {
   public_network_access_enabled   = false
   allow_nested_items_to_be_public = false
 
-  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 }
 
 resource "azurerm_storage_container" "app_data" {
@@ -46,7 +46,7 @@ resource "azurerm_private_endpoint" "pe_storage" {
     private_dns_zone_ids = [var.private_dns_zone_storage_id]
   }
 
-  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 }
 
 resource "azurerm_monitor_diagnostic_setting" "storage_diag" {

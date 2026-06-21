@@ -10,7 +10,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name                      = "standard"
   rbac_authorization_enabled    = true
 
-  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 }
 
 
@@ -39,7 +39,7 @@ resource "azurerm_private_endpoint" "pe_kv" {
     private_dns_zone_ids = [var.private_dns_zone_kv_id]
   }
 
-  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 }
 
 

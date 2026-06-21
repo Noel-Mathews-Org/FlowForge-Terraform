@@ -59,3 +59,9 @@ resource "azurerm_private_dns_zone_virtual_network_link" "hub_aks" {
   virtual_network_id    = azurerm_virtual_network.hub.id
   registration_enabled  = false
 }
+
+resource "azurerm_role_assignment" "law_reader" {
+  scope                = azurerm_log_analytics_workspace.law.id
+  role_definition_name = "Log Analytics Reader"
+  principal_id         = var.devops_group_object_id
+}

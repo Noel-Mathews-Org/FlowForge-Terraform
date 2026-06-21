@@ -11,7 +11,7 @@ resource "azurerm_network_interface" "jumpbox_nic" {
 
   tags = merge({
     Env   = var.env
-    Layer = "hub ${var.env}"
+    Layer = "hub"
   }, var.tags)
 }
 
@@ -43,6 +43,6 @@ resource "azurerm_linux_virtual_machine" "jumpbox" {
 
   tags = merge({
     Env   = var.env
-    Layer = "hub ${var.env}"
+    Layer = "hub"
   }, var.tags)
 }

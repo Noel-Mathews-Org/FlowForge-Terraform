@@ -13,15 +13,15 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   private_dns_zone_id           = var.private_dns_zone_postgres_id
   zone                          = "2"
 
-  # high_availability {
-  #   mode                      = "ZoneRedundant"
-  #   standby_availability_zone = "3"
-  # }
+  high_availability {
+    mode                      = "ZoneRedundant"
+    standby_availability_zone = "3"
+  }
 
   administrator_login    = var.postgres_admin_username
   administrator_password = var.postgres_admin_password
 
-  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 
   lifecycle {
     ignore_changes = [zone]
@@ -51,7 +51,7 @@ resource "azurerm_managed_redis" "redis" {
   sku_name              = var.redis_enterprise_sku
   public_network_access = "Disabled"
 
-  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 
   default_database {
     clustering_policy                  = "EnterpriseCluster"
@@ -79,7 +79,7 @@ resource "azurerm_private_endpoint" "pe_redis" {
     private_dns_zone_ids = [var.private_dns_zone_redis_id]
   }
 
-  tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
+  tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 }
 
 
