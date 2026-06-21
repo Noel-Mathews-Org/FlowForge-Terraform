@@ -31,5 +31,5 @@ devtest_group_object_id = "97012306-ede4-4162-8b23-be2a2c886b95"
 jumpbox_vm_size         = "Standard_B2ls_v2"
 tags = {
   Project = "FlowForge"
-  Owner   = "noel.mathews@flowforge.fun"
+  Owner   = "Noel"
 }
