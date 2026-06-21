@@ -6,7 +6,7 @@ resource "azurerm_user_assigned_identity" "aks_identity" {
 
 resource "azurerm_role_assignment" "aks_dns_contributor" {
   scope                = var.private_dns_zone_id
-  role_definition_name = "Private DNS Zone Contributor"
+  role_definition_name = "Private DNS Zone Contributor" # For our P2S to work AKS need to create private dns records so user can access using P2S
   principal_id         = azurerm_user_assigned_identity.aks_identity.principal_id
 }
 
@@ -33,8 +33,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     vnet_subnet_id       = var.aks_subnet_id
     auto_scaling_enabled = true
     min_count            = 2
-    max_count            = 3
+    max_count            = 4
     type                 = "VirtualMachineScaleSets"
+    zones                = ["2", "3"]
   }
 
   identity {
@@ -76,66 +77,22 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
 data "azurerm_client_config" "current" {}
 
-# Role Assignments for AGIC Identity
-# Contributor on AppGW
 resource "azurerm_role_assignment" "agic_appgw" {
   scope                = var.appgw_id
-  role_definition_name = "Contributor"
+  role_definition_name = "Contributor" # AGIC needs contributor on Application Gateway
   principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
 
-# Reader on App RG
+
 resource "azurerm_role_assignment" "agic_rg" {
   scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}"
-  role_definition_name = "Reader"
+  role_definition_name = "Reader" # AGIC needs Reader on Resource Group
   principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
 
-# Network Contributor on Spoke VNet
+
 resource "azurerm_role_assignment" "agic_vnet" {
   scope                = var.spoke_vnet_id
-  role_definition_name = "Network Contributor"
+  role_definition_name = "Network Contributor" # AGIC needs Network contributor on Vnet
   principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
-
-# Data Collection Rules for Managed Prometheus
-resource "azurerm_monitor_data_collection_endpoint" "dce" {
-  name                = "dce-${var.aks_cluster_name}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  kind                = "Linux"
-}
-
-resource "azurerm_monitor_data_collection_rule" "dcr" {
-  name                        = "dcr-${var.aks_cluster_name}"
-  resource_group_name         = var.resource_group_name
-  location                    = var.location
-  data_collection_endpoint_id = azurerm_monitor_data_collection_endpoint.dce.id
-  kind                        = "Linux"
-
-  destinations {
-    monitor_account {
-      monitor_account_id = var.monitor_workspace_id
-      name               = "MonitoringAccount1"
-    }
-  }
-
-  data_flow {
-    streams      = ["Microsoft-PrometheusMetrics"]
-    destinations = ["MonitoringAccount1"]
-  }
-
-  data_sources {
-    prometheus_forwarder {
-      name    = "PrometheusDataSource"
-      streams = ["Microsoft-PrometheusMetrics"]
-    }
-  }
-}
-
-resource "azurerm_monitor_data_collection_rule_association" "dcra" {
-  name                    = "dcra-${var.aks_cluster_name}"
-  target_resource_id      = azurerm_kubernetes_cluster.aks.id
-  data_collection_rule_id = azurerm_monitor_data_collection_rule.dcr.id
-}
-

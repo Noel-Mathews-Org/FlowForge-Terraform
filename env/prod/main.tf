@@ -2,8 +2,6 @@ data "azurerm_resource_group" "main" {
   name = "Noel-RG-Prod"
 }
 
-
-
 data "azurerm_client_config" "current" {}
 
 resource "random_string" "suffix" {
@@ -42,6 +40,7 @@ module "spoke_network" {
   private_dns_zone_postgres_id = module.hub_network.private_dns_zone_postgres_id
   private_dns_zone_redis_id    = module.hub_network.private_dns_zone_redis_id
   private_dns_zone_aks_id      = module.hub_network.private_dns_zone_aks_id
+  vpn_client_address_pool      = var.vpn_client_address_pool
   tags                         = var.tags
 }
 
@@ -61,6 +60,7 @@ module "firewall" {
   spoke_vnet_cidr            = var.spoke_vnet_cidr
   vpn_client_address_pool    = var.vpn_client_address_pool
   hub_vnet_id                = module.hub_network.hub_vnet_id
+  aks_subnet_cidr            = var.aks_subnet_cidr
   tags                       = var.tags
 }
 
@@ -104,7 +104,6 @@ module "aks" {
   spoke_resource_group_name  = data.azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   aks_outbound_type          = "userDefinedRouting"
-  monitor_workspace_id       = module.hub_network.monitor_workspace_id
   depends_on = [
     module.firewall,
     azurerm_virtual_network_peering.spoke_to_hub,
@@ -119,6 +118,7 @@ module "databases" {
   location                     = var.location
   env                          = var.environment
   pe_subnet_id                 = module.spoke_network.pe_subnet_id
+  db_subnet_id                 = module.spoke_network.db_subnet_id
   private_dns_zone_postgres_id = module.hub_network.private_dns_zone_postgres_id
   private_dns_zone_redis_id    = module.hub_network.private_dns_zone_redis_id
   postgres_sku                 = var.postgres_sku
@@ -132,6 +132,16 @@ module "databases" {
   postgres_server_name         = "psql-${var.environment}-${random_string.suffix.result}"
   redis_cache_name             = "redis-${var.environment}-${random_string.suffix.result}"
   tags                         = var.tags
+}
+
+module "monitoring" {
+  source              = "../../modules/monitoring"
+  env                 = var.environment
+  resource_group_name = data.azurerm_resource_group.main.name
+  appgw_id            = module.app_gateway.appgw_id
+  postgres_id         = module.databases.postgres_id
+  redis_id            = module.databases.redis_id
+  kv_id               = module.key_vault["prod"].kv_id
 }
 
 module "key_vault" {
@@ -164,7 +174,7 @@ module "storage" {
   storage_account_name              = "${random_string.suffix.result}ff${each.key}"
   tags                              = var.tags
 }
-# VNet Peering Prod (With VPN Gateway Dependency)
+
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
   name                         = "peer-spoke-to-hub"
   resource_group_name          = data.azurerm_resource_group.main.name
@@ -187,7 +197,7 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   depends_on                   = [module.vpn_gateway, module.firewall]
 }
 
-# Commented out to prevent deployment in lab account
+# Future 
 # module "policies" {
 #   source                     = "../../modules/policies"
 #   env                        = var.environment
@@ -237,7 +247,6 @@ resource "azurerm_federated_identity_credential" "app_fid" {
   subject   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
 }
 
-# ACR Provisioning
 resource "azurerm_container_registry" "acr" {
   name                = "flowforgeacr${random_string.suffix.result}"
   resource_group_name = data.azurerm_resource_group.main.name
@@ -248,11 +257,11 @@ resource "azurerm_container_registry" "acr" {
 
 resource "azurerm_role_assignment" "aks_acr_pull" {
   scope                = azurerm_container_registry.acr.id
-  role_definition_name = "AcrPull"
+  role_definition_name = "AcrPull" # AKS need to Pull images
   principal_id         = module.aks.kubelet_identity_object_id
 }
 
-# GitHub Actions OIDC
+
 resource "azurerm_user_assigned_identity" "github_actions" {
   name                = "mi-github-actions-prod"
   resource_group_name = data.azurerm_resource_group.main.name
@@ -270,12 +279,12 @@ locals {
 }
 
 resource "azurerm_federated_identity_credential" "github_fid" {
-  for_each                  = toset(local.github_branches)
-  name                      = "fid-github-${each.key}"
-  audience                  = ["api://AzureADTokenExchange"]
-  issuer                    = "https://token.actions.githubusercontent.com"
-  user_assigned_identity_id = azurerm_user_assigned_identity.github_actions.id
-  subject                   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
+  for_each  = toset(local.github_branches)
+  name      = "fid-github-${each.key}"
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  parent_id = azurerm_user_assigned_identity.github_actions.id
+  subject   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
 }
 
 resource "azurerm_role_assignment" "aks_cluster_admin" {

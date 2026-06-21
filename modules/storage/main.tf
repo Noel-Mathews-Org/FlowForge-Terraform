@@ -3,7 +3,7 @@ resource "azurerm_storage_account" "sa" {
   resource_group_name             = var.resource_group_name
   location                        = var.location
   account_tier                    = "Standard"
-  account_replication_type        = "LRS"
+  account_replication_type        = "ZRS"
   public_network_access_enabled   = false
   allow_nested_items_to_be_public = false
 
@@ -22,14 +22,12 @@ resource "azurerm_storage_container" "ai_reports" {
   container_access_type = "private"
 }
 
-# Role Assignment for AKS to access Storage
 resource "azurerm_role_assignment" "aks_storage_blob_data_contributor" {
   scope                = azurerm_storage_account.sa.id
-  role_definition_name = "Storage Blob Data Contributor"
+  role_definition_name = "Storage Blob Data Contributor" # AKS to store and get data from storage account
   principal_id         = var.aks_managed_identity_principal_id
 }
 
-# Storage Private Endpoint
 resource "azurerm_private_endpoint" "pe_storage" {
   name                = "pe-storage-${var.env}"
   location            = var.location
@@ -51,7 +49,6 @@ resource "azurerm_private_endpoint" "pe_storage" {
   tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 }
 
-# Diagnostic settings for Storage Account -> Log Analytics
 resource "azurerm_monitor_diagnostic_setting" "storage_diag" {
   name                       = "diag-storage-${var.env}"
   target_resource_id         = "${azurerm_storage_account.sa.id}/blobServices/default"

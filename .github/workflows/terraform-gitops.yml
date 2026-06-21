@@ -137,3 +137,50 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -parallelism=30 -auto-approve tfplan
+
+  notify:
+    name: "Notify Team"
+    needs: [determine-env, terraform-ci, terraform-cd]
+    if: always() && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [[ "${{ needs.terraform-cd.result }}" == "success" ]]; then
+            echo "EMOJI=✅" >> $GITHUB_OUTPUT
+            echo "COLOR=#5cb85c" >> $GITHUB_OUTPUT
+            echo "STATUS_TEXT=SUCCESS" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.terraform-cd.result }}" == "cancelled" ]]; then
+            echo "EMOJI=⚠️" >> $GITHUB_OUTPUT
+            echo "COLOR=#f0ad4e" >> $GITHUB_OUTPUT
+            echo "STATUS_TEXT=CANCELLED" >> $GITHUB_OUTPUT
+          else
+            echo "EMOJI=❌" >> $GITHUB_OUTPUT
+            echo "COLOR=#d9534f" >> $GITHUB_OUTPUT
+            echo "STATUS_TEXT=FAILED" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Notification Email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.DEVELOPMENT_TEAM_EMAIL }}
+          from: FlowForge DevOps <${{ secrets.MAIL_USERNAME }}>
+          subject: "${{ steps.status.outputs.EMOJI }} ${{ steps.status.outputs.STATUS_TEXT }} | Terraform Apply | ${{ needs.determine-env.outputs.env_name }}"
+          html_body: |
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #ddd;border-radius:8px;overflow:hidden">
+              <div style="background:${{ steps.status.outputs.COLOR }};color:white;padding:20px">
+                <h2 style="margin:0;font-size:20px">${{ steps.status.outputs.EMOJI }} Terraform Apply ${{ steps.status.outputs.STATUS_TEXT }}</h2>
+                <p style="margin:6px 0 0;opacity:0.9;font-size:14px">Environment: ${{ needs.determine-env.outputs.env_name }} | Triggered by: ${{ github.actor }}</p>
+              </div>
+              <div style="padding:20px">
+                <p style="font-size:14px;color:#333">The <strong>${{ needs.determine-env.outputs.env_name }}</strong> infrastructure deployment has <strong>${{ steps.status.outputs.STATUS_TEXT }}</strong>.</p>
+                <div style="text-align:center;margin-top:20px">
+                  <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" style="background:#24292e;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;display:inline-block">View Logs</a>
+                </div>
+              </div>
+            </div>

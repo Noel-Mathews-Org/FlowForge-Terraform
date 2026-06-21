@@ -59,7 +59,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "fw_policy_rcg" {
 
     rule {
       name              = "AllowAKSReqs"
-      source_addresses  = ["*"]
+      source_addresses  = [var.aks_subnet_cidr]
       destination_fqdns = var.aks_allowed_fqdns
       protocols {
         type = "Https"
@@ -73,7 +73,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "fw_policy_rcg" {
 
     rule {
       name                  = "AllowAKSFQDNTags"
-      source_addresses      = ["*"]
+      source_addresses      = [var.aks_subnet_cidr]
       destination_fqdn_tags = ["AzureKubernetesService"]
       protocols {
         type = "Https"
@@ -93,28 +93,28 @@ resource "azurerm_firewall_policy_rule_collection_group" "fw_policy_rcg" {
 
     rule {
       name                  = "AllowAKS_UDP"
-      source_addresses      = ["*"]
+      source_addresses      = [var.aks_subnet_cidr]
       destination_addresses = ["AzureCloud"]
       destination_ports     = ["1194"]
       protocols             = ["UDP"]
     }
     rule {
       name                  = "AllowAKS_TCP"
-      source_addresses      = ["*"]
+      source_addresses      = [var.aks_subnet_cidr]
       destination_addresses = ["AzureCloud"]
       destination_ports     = ["9000"]
       protocols             = ["TCP"]
     }
     rule {
       name                  = "AllowAKS_API"
-      source_addresses      = ["*"]
+      source_addresses      = [var.aks_subnet_cidr]
       destination_addresses = ["AzureCloud"]
       destination_ports     = ["443", "80"]
       protocols             = ["TCP"]
     }
     rule {
       name                  = "AllowNTP"
-      source_addresses      = ["*"]
+      source_addresses      = [var.aks_subnet_cidr]
       destination_addresses = ["*"]
       destination_ports     = ["123"]
       protocols             = ["UDP"]
@@ -122,21 +122,21 @@ resource "azurerm_firewall_policy_rule_collection_group" "fw_policy_rcg" {
   }
 
   network_rule_collection {
-    name     = "internal-net-rules"
+    name     = "vpn-to-spoke-rules"
     priority = 300
     action   = "Allow"
 
     rule {
-      name                  = "AllowInternalAnyToAny"
-      source_addresses      = [var.hub_vnet_cidr, var.spoke_vnet_cidr, var.vpn_client_address_pool]
-      destination_addresses = [var.hub_vnet_cidr, var.spoke_vnet_cidr, var.vpn_client_address_pool]
-      destination_ports     = ["*"]
-      protocols             = ["Any"]
+      name                  = "AllowVPNtoSpoke"
+      source_addresses      = [var.vpn_client_address_pool]
+      destination_addresses = [var.spoke_vnet_cidr]
+      destination_ports     = ["80", "443", "5432", "10000", "22"]
+      protocols             = ["TCP"]
     }
   }
 }
 
-# Route Table for Spoke Subnets
+
 resource "azurerm_route_table" "spoke_rt" {
   name                          = "rt-spoke-${var.env}"
   location                      = var.location
@@ -153,7 +153,7 @@ resource "azurerm_route_table" "spoke_rt" {
   tags = merge({ Env = var.env, Layer = "hub ${var.env}" }, var.tags)
 }
 
-# Route Table Associations
+
 resource "azurerm_subnet_route_table_association" "aks" {
   subnet_id      = var.aks_subnet_id
   route_table_id = azurerm_route_table.spoke_rt.id

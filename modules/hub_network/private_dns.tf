@@ -1,4 +1,3 @@
-# Key Vault DNS Zone
 resource "azurerm_private_dns_zone" "kv" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = var.resource_group_name
@@ -8,7 +7,7 @@ resource "azurerm_private_dns_zone" "kv" {
   }, var.tags)
 }
 
-# Storage Account Blob DNS Zone
+
 resource "azurerm_private_dns_zone" "storage" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = var.resource_group_name
@@ -18,7 +17,7 @@ resource "azurerm_private_dns_zone" "storage" {
   }, var.tags)
 }
 
-# PostgreSQL Flexible Server DNS Zone
+
 resource "azurerm_private_dns_zone" "postgres" {
   name                = "privatelink.postgres.database.azure.com"
   resource_group_name = var.resource_group_name
@@ -28,7 +27,7 @@ resource "azurerm_private_dns_zone" "postgres" {
   }, var.tags)
 }
 
-# Redis DNS Zone
+
 resource "azurerm_private_dns_zone" "redis" {
   name                = "privatelink.redis.azure.net"
   resource_group_name = var.resource_group_name
@@ -38,7 +37,7 @@ resource "azurerm_private_dns_zone" "redis" {
   }, var.tags)
 }
 
-# Link all zones to Hub VNet
+
 resource "azurerm_private_dns_zone_virtual_network_link" "hub_kv" {
   name                  = "hub-link-kv"
   resource_group_name   = var.resource_group_name

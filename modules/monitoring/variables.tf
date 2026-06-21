@@ -1,0 +1,6 @@
+variable "env" { type = string }
+variable "resource_group_name" { type = string }
+variable "appgw_id" { type = string }
+variable "postgres_id" { type = string }
+variable "redis_id" { type = string }
+variable "kv_id" { type = string }

@@ -9,7 +9,7 @@ resource "azurerm_public_ip" "vpngw_pip" {
   name                = "pip-vpngw-${var.env}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  allocation_method   = "Static" # VpnGw1AZ requires Static PIP
+  allocation_method   = "Static"
   sku                 = "Standard"
   zones               = ["1", "2", "3"]
 

@@ -9,7 +9,6 @@ resource "azurerm_virtual_network" "spoke" {
   }, var.tags)
 }
 
-# Subnets
 resource "azurerm_subnet" "appgw" {
   name                 = "snet-appgw"
   resource_group_name  = var.resource_group_name
@@ -25,11 +24,10 @@ resource "azurerm_subnet" "aks" {
 }
 
 resource "azurerm_subnet" "pe" {
-  name                 = "snet-pe"
-  resource_group_name  = var.resource_group_name
-  virtual_network_name = azurerm_virtual_network.spoke.name
-  address_prefixes     = [var.pe_subnet_cidr]
-  # For private endpoints, NSG policies need this disabled, but standard now allows NSG enforcement.
+  name                              = "snet-pe"
+  resource_group_name               = var.resource_group_name
+  virtual_network_name              = azurerm_virtual_network.spoke.name
+  address_prefixes                  = [var.pe_subnet_cidr]
   private_endpoint_network_policies = "Enabled"
 }
 
@@ -38,9 +36,16 @@ resource "azurerm_subnet" "db" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.spoke.name
   address_prefixes     = [var.db_subnet_cidr]
+
+  delegation {
+    name = "fs"
+    service_delegation {
+      name    = "Microsoft.DBforPostgreSQL/flexibleServers"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
 }
 
-# NSGs required for EVERY subnet (Policy: Require NSG on every subnet)
 resource "azurerm_network_security_group" "appgw_nsg" {
   name                = "nsg-appgw-${var.env}"
   location            = var.location
@@ -80,6 +85,19 @@ resource "azurerm_network_security_group" "aks_nsg" {
   name                = "nsg-aks-${var.env}"
   location            = var.location
   resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "Allow_AppGW_Inbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["80", "443", "8080"]
+    source_address_prefix      = var.appgw_subnet_cidr
+    destination_address_prefix = "*"
+  }
+
   tags                = { Env = var.env, Layer = "spoke ${var.env}" }
 }
 
@@ -92,6 +110,19 @@ resource "azurerm_network_security_group" "pe_nsg" {
   name                = "nsg-pe-${var.env}"
   location            = var.location
   resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "Allow_AKS_VPN_to_PE"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["443", "10000"]
+    source_address_prefixes    = [var.aks_subnet_cidr, var.vpn_client_address_pool]
+    destination_address_prefix = "*"
+  }
+
   tags                = { Env = var.env, Layer = "spoke ${var.env}" }
 }
 
@@ -104,6 +135,19 @@ resource "azurerm_network_security_group" "db_nsg" {
   name                = "nsg-db-${var.env}"
   location            = var.location
   resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "Allow_AKS_VPN_to_DB"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5432"
+    source_address_prefixes    = [var.aks_subnet_cidr, var.vpn_client_address_pool]
+    destination_address_prefix = "*"
+  }
+
   tags                = { Env = var.env, Layer = "spoke ${var.env}" }
 }
 
@@ -112,9 +156,7 @@ resource "azurerm_subnet_network_security_group_association" "db_nsg_assoc" {
   network_security_group_id = azurerm_network_security_group.db_nsg.id
 }
 
-# Peering removed from module to be handled in root main.tf for explicit dependency control
 
-# Link Spoke to Private DNS Zones
 resource "azurerm_private_dns_zone_virtual_network_link" "spoke_kv" {
   name                  = "spoke-link-kv"
   resource_group_name   = var.hub_resource_group_name

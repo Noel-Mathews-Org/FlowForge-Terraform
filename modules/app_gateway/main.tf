@@ -15,7 +15,11 @@ resource "azurerm_application_gateway" "appgw" {
   sku {
     name     = "WAF_v2"
     tier     = "WAF_v2"
-    capacity = 1
+  }
+
+  autoscale_configuration {
+    min_capacity = 1
+    max_capacity = 2
   }
 
   gateway_ip_configuration {
@@ -65,7 +69,7 @@ resource "azurerm_application_gateway" "appgw" {
 
   tags = merge({ Env = var.env, Layer = "spoke ${var.env}" }, var.tags)
 
-  # Ignore changes made by AGIC
+
   lifecycle {
     ignore_changes = [
       backend_address_pool,

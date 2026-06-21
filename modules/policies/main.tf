@@ -1,4 +1,4 @@
-# Example Policy Assignment for Tagging (Require Env and Owner)
+
 resource "azurerm_subscription_policy_assignment" "require_tags" {
   name                 = "require-env-tag"
   subscription_id      = "/subscriptions/${var.subscription_id}"
@@ -13,7 +13,7 @@ resource "azurerm_subscription_policy_assignment" "require_tags" {
   })
 }
 
-# Example Policy Assignment for Deny PaaS without private endpoint (Storage)
+
 resource "azurerm_subscription_policy_assignment" "deny_public_storage" {
   name                 = "deny-pub-storage"
   subscription_id      = "/subscriptions/${var.subscription_id}"

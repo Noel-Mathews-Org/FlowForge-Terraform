@@ -1,7 +1,3 @@
-output "frontend_url" {
-  value = "https://${var.domain}"
-}
-
 output "app_identity_client_ids" {
   description = "The Workload Identity Client IDs per environment"
   value       = { for k, v in azurerm_user_assigned_identity.app_identity : k => v.client_id }

@@ -28,9 +28,3 @@ output "private_dns_zone_redis_id" {
 output "private_dns_zone_aks_id" {
   value = azurerm_private_dns_zone.aks.id
 }
-output "monitor_workspace_id" {
-  value = azurerm_monitor_workspace.amw.id
-}
-output "grafana_id" {
-  value = azurerm_dashboard_grafana.grafana.id
-}

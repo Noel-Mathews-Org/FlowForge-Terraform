@@ -1,5 +1,3 @@
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_key_vault" "kv" {
   name                          = var.key_vault_name
   location                      = var.location
@@ -15,15 +13,14 @@ resource "azurerm_key_vault" "kv" {
   tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 }
 
-# Role Assignment for AKS to read secrets
+
 resource "azurerm_role_assignment" "aks_kv_secrets_user" {
   scope                = azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Secrets User"
+  role_definition_name = "Key Vault Secrets User" # AKS need to read secrets so this role is given
   principal_id         = var.aks_managed_identity_principal_id
 }
 
 
-# Key Vault Private Endpoint
 resource "azurerm_private_endpoint" "pe_kv" {
   name                = "pe-kv-${var.env}"
   location            = var.location
@@ -45,7 +42,7 @@ resource "azurerm_private_endpoint" "pe_kv" {
   tags = merge({ Env = var.env, Layer = "data ${var.env}" }, var.tags)
 }
 
-# Diagnostic settings for Key Vault -> Log Analytics
+
 resource "azurerm_monitor_diagnostic_setting" "kv_diag" {
   name                       = "diag-kv-${var.env}"
   target_resource_id         = azurerm_key_vault.kv.id
