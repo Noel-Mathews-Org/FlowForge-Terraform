@@ -144,8 +144,8 @@ module "key_vault" {
   private_dns_zone_kv_id            = module.hub_network.private_dns_zone_kv_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
   tenant_id                         = data.azurerm_client_config.current.tenant_id
-  aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity.principal_id
-  key_vault_name                    = "kv-${var.environment}-${random_string.suffix.result}"
+  aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity[each.key].principal_id
+  key_vault_name                    = "kv-${each.key}-${random_string.suffix.result}"
   tags                              = var.tags
 }
 
@@ -158,8 +158,8 @@ module "storage" {
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_storage_id       = module.hub_network.private_dns_zone_storage_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
-  aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity.principal_id
-  storage_account_name              = "${random_string.suffix.result}ff${var.environment}"
+  aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity[each.key].principal_id
+  storage_account_name              = "${random_string.suffix.result}ff${each.key}"
   tags                              = var.tags
 }
 # VNet Peering Prod (With VPN Gateway Dependency)
@@ -207,7 +207,8 @@ module "jumpbox" {
 }
 
 resource "azurerm_user_assigned_identity" "app_identity" {
-  name                = "mi-flowforge-app-${var.environment}"
+  for_each            = toset(local.environments)
+  name                = "mi-flowforge-app-${each.key}"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.location
 }
@@ -226,12 +227,12 @@ locals {
 }
 
 resource "azurerm_federated_identity_credential" "app_fid" {
-  for_each                  = { for combo in local.fid_combinations : "${combo.env}-${combo.svc}" => combo }
-  name                      = "fid-flowforge-${each.key}"
-  audience                  = ["api://AzureADTokenExchange"]
-  issuer                    = module.aks.oidc_issuer_url
-  user_assigned_identity_id = azurerm_user_assigned_identity.app_identity.id
-  subject                   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
+  for_each  = { for combo in local.fid_combinations : "${combo.env}-${combo.svc}" => combo }
+  name      = "fid-flowforge-${each.key}"
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = module.aks.oidc_issuer_url
+  parent_id = azurerm_user_assigned_identity.app_identity[each.value.env].id
+  subject   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
 }
 
 # ACR Provisioning
