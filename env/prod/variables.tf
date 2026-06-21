@@ -35,8 +35,3 @@ variable "jumpbox_vm_size" {
   default     = "Standard_B2s"
 }
 
-variable "owner" {
-  type        = string
-  description = "Owner of the resources"
-}
-

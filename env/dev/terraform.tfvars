@@ -1,4 +1,4 @@
-environment             = "dev"
+environment = "dev"
 domain                  = "flowforge.fun"
 location                = "centralus"
 hub_vnet_cidr           = "192.168.0.0/20"
