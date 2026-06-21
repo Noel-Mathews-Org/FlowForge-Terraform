@@ -129,7 +129,7 @@ module "databases" {
   log_analytics_workspace_id   = module.hub_network.log_analytics_workspace_id
   postgres_admin_username      = var.postgres_admin_username
   postgres_admin_password      = var.postgres_admin_password
-  postgres_server_name         = "psql-${var.environment}-${random_string.suffix.result}"
+  postgres_server_name         = "pgsql-${var.environment}-${random_string.suffix.result}"
   redis_cache_name             = "redis-${var.environment}-${random_string.suffix.result}"
   tags                         = var.tags
 }
@@ -156,7 +156,7 @@ module "key_vault" {
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
   tenant_id                         = data.azurerm_client_config.current.tenant_id
   aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity[each.key].principal_id
-  key_vault_name                    = "kv-${each.key}-${random_string.suffix.result}"
+  key_vault_name                    = "kvlt-${each.key}-${random_string.suffix.result}"
   tags                              = var.tags
 }
 
@@ -243,7 +243,7 @@ resource "azurerm_federated_identity_credential" "app_fid" {
   name      = "fid-flowforge-${each.key}"
   audience  = ["api://AzureADTokenExchange"]
   issuer    = module.aks.oidc_issuer_url
-  parent_id = azurerm_user_assigned_identity.app_identity[each.value.env].id
+  user_assigned_identity_id = azurerm_user_assigned_identity.app_identity[each.value.env].id
   subject   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
 }
 
@@ -283,7 +283,7 @@ resource "azurerm_federated_identity_credential" "github_fid" {
   name      = "fid-github-${each.key}"
   audience  = ["api://AzureADTokenExchange"]
   issuer    = "https://token.actions.githubusercontent.com"
-  parent_id = azurerm_user_assigned_identity.github_actions.id
+  user_assigned_identity_id = azurerm_user_assigned_identity.github_actions.id
   subject   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
 }
 

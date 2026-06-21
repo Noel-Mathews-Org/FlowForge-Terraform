@@ -6,16 +6,10 @@ resource "azurerm_monitor_metric_alert" "appgw_5xx" {
 
   criteria {
     metric_namespace = "Microsoft.Network/applicationGateways"
-    metric_name      = "TotalRequests"
+    metric_name      = "FailedRequests"
     aggregation      = "Total"
     operator         = "GreaterThan"
     threshold        = 10
-
-    dimension {
-      name     = "HttpStatusGroup"
-      operator = "Include"
-      values   = ["5xx"]
-    }
   }
 }
 
