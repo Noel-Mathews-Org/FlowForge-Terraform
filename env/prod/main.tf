@@ -226,12 +226,12 @@ locals {
 }
 
 resource "azurerm_federated_identity_credential" "app_fid" {
-  for_each            = { for combo in local.fid_combinations : "${combo.env}-${combo.svc}" => combo }
-  name                = "fid-flowforge-${each.key}"
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = module.aks.oidc_issuer_url
-  parent_id           = azurerm_user_assigned_identity.app_identity.id
-  subject             = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
+  for_each  = { for combo in local.fid_combinations : "${combo.env}-${combo.svc}" => combo }
+  name      = "fid-flowforge-${each.key}"
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = module.aks.oidc_issuer_url
+  parent_id = azurerm_user_assigned_identity.app_identity.id
+  subject   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
 }
 
 # ACR Provisioning
@@ -267,12 +267,12 @@ locals {
 }
 
 resource "azurerm_federated_identity_credential" "github_fid" {
-  for_each            = toset(local.github_branches)
-  name                = "fid-github-${each.key}"
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  parent_id           = azurerm_user_assigned_identity.github_actions.id
-  subject             = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
+  for_each  = toset(local.github_branches)
+  name      = "fid-github-${each.key}"
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  parent_id = azurerm_user_assigned_identity.github_actions.id
+  subject   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
 }
 
 resource "azurerm_role_assignment" "aks_cluster_admin" {
