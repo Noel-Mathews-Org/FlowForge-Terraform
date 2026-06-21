@@ -135,11 +135,12 @@ module "databases" {
 }
 
 module "key_vault" {
-  source = "../../modules/key_vault"
+  source   = "../../modules/key_vault"
+  for_each = toset(local.environments)
 
   resource_group_name               = data.azurerm_resource_group.main.name
   location                          = var.location
-  env                               = var.environment
+  env                               = each.key
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_kv_id            = module.hub_network.private_dns_zone_kv_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
@@ -150,11 +151,12 @@ module "key_vault" {
 }
 
 module "storage" {
-  source = "../../modules/storage"
+  source   = "../../modules/storage"
+  for_each = toset(local.environments)
 
   resource_group_name               = data.azurerm_resource_group.main.name
   location                          = var.location
-  env                               = var.environment
+  env                               = each.key
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_storage_id       = module.hub_network.private_dns_zone_storage_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
