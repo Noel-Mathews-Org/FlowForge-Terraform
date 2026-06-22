@@ -137,3 +137,5 @@ variable "alert_email" {
 
 variable "kubernetes_version" { type = string }
 variable "aks_sku_tier" { type = string }
+
+variable "jumpbox_zone" { type = string }

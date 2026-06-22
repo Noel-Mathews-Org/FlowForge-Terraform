@@ -214,6 +214,7 @@ module "jumpbox" {
   subnet_id           = module.hub_network.management_subnet_id
   admin_password      = var.jumpbox_admin_password
   vm_size             = var.jumpbox_vm_size
+  jumpbox_zone        = var.jumpbox_zone
   tags                = var.tags
 }
 

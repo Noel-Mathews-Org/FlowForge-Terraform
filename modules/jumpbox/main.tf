@@ -23,7 +23,7 @@ resource "azurerm_linux_virtual_machine" "jumpbox" {
   admin_username                  = "adminuser"
   admin_password                  = var.admin_password
   disable_password_authentication = false
-  zone                            = "1"
+  zone                            = var.jumpbox_zone
 
   network_interface_ids = [
     azurerm_network_interface.jumpbox_nic.id,

@@ -16,3 +16,5 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "jumpbox_zone" { type = string }

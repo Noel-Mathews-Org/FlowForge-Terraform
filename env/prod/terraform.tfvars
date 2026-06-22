@@ -33,9 +33,10 @@ aks_allowed_fqdns = [
   "grafana.com", "*.grafana.com", "*.github.io", "*.amazonaws.com"
 ]
 alert_email             = "noelmathews123@gmail.com"
-devops_group_object_id  = "d7cc1302-b243-42a6-9598-2a01399fa0a9"
-devtest_group_object_id = "d541efe9-9da2-445c-a73d-4a6320d47052"
-jumpbox_vm_size         = "Standard_D2als_v6"
+devops_group_object_id  = "76404b8f-f4c9-4627-b922-ce1f6e8f6197"
+devtest_group_object_id = "bf0983af-867a-4920-8525-d8d62f718c86"
+jumpbox_vm_size         = "Standard_D2as_v4"
+jumpbox_zone            = "2"
 tags = {
   Project = "FlowForge"
   Owner   = "Noel"
