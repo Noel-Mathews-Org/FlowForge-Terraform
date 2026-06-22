@@ -51,10 +51,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     load_balancer_sku = "standard"
   }
 
-  oms_agent {
-    log_analytics_workspace_id = var.log_analytics_workspace_id
-  }
-
   ingress_application_gateway {
     gateway_id = var.appgw_id
   }
