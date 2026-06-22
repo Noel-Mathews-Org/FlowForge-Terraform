@@ -3,10 +3,6 @@ output "app_identity_client_ids" {
   value       = { for k, v in azurerm_user_assigned_identity.app_identity : k => v.client_id }
 }
 
-output "azure_tenant_id" {
-  description = "The Azure Tenant ID to put in values-common.yaml"
-  value       = data.azurerm_client_config.current.tenant_id
-}
 
 output "keyvault_names" {
   value = { for k, v in module.key_vault : k => v.kv_name }
@@ -35,14 +31,12 @@ output "github_actions_client_id" {
   value       = azurerm_user_assigned_identity.github_actions.client_id
 }
 
-output "postgres_connection_string" {
-  description = "Ready-to-use DATABASE_URL for Postgres"
-  value       = "database-url=postgresql+asyncpg://${module.databases.postgres_admin_username}:${urlencode(var.postgres_admin_password)}@${module.databases.postgres_fqdn}:5432/postgres?ssl=require"
-  sensitive   = true
+output "jumpbox_private_ip" {
+  description = "The private IP of the jumpbox for SSH access"
+  value       = module.jumpbox.jumpbox_private_ip
 }
 
-output "redis_endpoint" {
-  description = "Ready-to-use REDIS_URL"
-  value       = "redis-url=rediss://:${module.databases.redis_primary_access_key}@${module.databases.redis_hostname}:${module.databases.redis_port}"
-  sensitive   = true
+output "aks_kubeconfig_command" {
+  description = "Command to get the kubeconfig for the AKS cluster"
+  value       = "az aks get-credentials --resource-group ${data.azurerm_resource_group.main.name} --name ${module.aks.aks_cluster_name} --overwrite-existing"
 }

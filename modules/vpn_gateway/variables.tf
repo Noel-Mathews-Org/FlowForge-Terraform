@@ -7,6 +7,8 @@ variable "log_analytics_workspace_id" { type = string }
 variable "vpn_client_address_pool" { type = string }
 variable "entra_tenant_id" { type = string }
 variable "entra_audience" { type = string }
+variable "firewall_private_ip" { type = string }
+variable "spoke_vnet_cidr" { type = string }
 
 variable "tags" {
   type    = map(string)

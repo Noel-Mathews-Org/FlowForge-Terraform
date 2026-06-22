@@ -47,3 +47,24 @@ resource "azurerm_virtual_network_gateway" "vpngw" {
   tags = merge({ Env = var.env, Layer = "hub" }, var.tags)
 }
 
+resource "azurerm_route_table" "gateway_rt" {
+  name                          = "rt-gateway-${var.env}"
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
+  bgp_route_propagation_enabled = true
+
+  route {
+    name                   = "RouteSpokeToFW"
+    address_prefix         = var.spoke_vnet_cidr
+    next_hop_type          = "VirtualAppliance"
+    next_hop_in_ip_address = var.firewall_private_ip
+  }
+
+  tags = merge({ Env = var.env, Layer = "hub" }, var.tags)
+}
+
+resource "azurerm_subnet_route_table_association" "gateway" {
+  subnet_id      = azurerm_subnet.gw.id
+  route_table_id = azurerm_route_table.gateway_rt.id
+}
+

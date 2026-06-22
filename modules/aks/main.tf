@@ -28,24 +28,22 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   default_node_pool {
-    name                 = "default"
-    vm_size              = var.aks_vm_size
-    vnet_subnet_id       = var.aks_subnet_id
-    auto_scaling_enabled = true
-    min_count            = 2
-    max_count            = 4
-    type                 = "VirtualMachineScaleSets"
-    zones                = ["2", "3"]
+    name                         = "system"
+    vm_size                      = var.aks_system_vm_size
+    vnet_subnet_id               = var.aks_subnet_id
+    auto_scaling_enabled         = true
+    min_count                    = 2
+    max_count                    = 3
+    type                         = "VirtualMachineScaleSets"
+    zones                        = var.aks_system_zones
+    max_pods                     = 110
+    only_critical_addons_enabled = true
   }
 
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.aks_identity.id]
   }
-
-  depends_on = [
-    azurerm_role_assignment.aks_dns_contributor
-  ]
 
   network_profile {
     network_plugin    = "azure"
@@ -67,12 +65,23 @@ resource "azurerm_kubernetes_cluster" "aks" {
     gateway_id = var.appgw_id
   }
 
-  key_vault_secrets_provider {
-    secret_rotation_enabled  = true
-    secret_rotation_interval = "5m"
-  }
-
   tags = merge({ Env = var.env, Layer = "spoke" }, var.tags)
+
+  depends_on = [
+    azurerm_role_assignment.aks_dns_contributor
+  ]
+}
+
+resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
+  name                  = "node"
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
+  vm_size               = var.aks_user_vm_size
+  vnet_subnet_id        = var.aks_subnet_id
+  auto_scaling_enabled  = true
+  min_count             = 2
+  max_count             = 3
+  max_pods              = 60
+  zones                 = var.aks_user_zones
 }
 
 data "azurerm_client_config" "current" {}

@@ -13,3 +13,6 @@ output "aks_kubelet_identity_client_id" {
 output "oidc_issuer_url" {
   value = azurerm_kubernetes_cluster.aks.oidc_issuer_url
 }
+output "aks_cluster_name" {
+  value = azurerm_kubernetes_cluster.aks.name
+}

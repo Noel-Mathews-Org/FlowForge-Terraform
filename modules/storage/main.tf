@@ -16,12 +16,6 @@ resource "azurerm_storage_container" "app_data" {
   container_access_type = "private"
 }
 
-resource "azurerm_storage_container" "ai_reports" {
-  name                  = "ai-incident-reports"
-  storage_account_id    = azurerm_storage_account.sa.id
-  container_access_type = "private"
-}
-
 resource "azurerm_role_assignment" "aks_storage_blob_data_contributor" {
   scope                = azurerm_storage_account.sa.id
   role_definition_name = "Storage Blob Data Contributor" # AKS to store and get data from storage account

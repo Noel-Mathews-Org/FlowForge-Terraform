@@ -13,7 +13,10 @@ pe_subnet_cidr          = "192.168.20.0/24"
 db_subnet_cidr          = "192.168.21.0/24"
 vpn_client_address_pool = "172.16.0.0/24"
 entra_audience          = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-aks_vm_size             = "Standard_D2s_v3"
+aks_system_vm_size      = "Standard_D2s_v3"
+aks_user_vm_size        = "Standard_D2s_v4"
+aks_system_zones        = ["2", "3"]
+aks_user_zones          = ["2", "3"]
 postgres_sku            = "GP_Standard_D2ds_v5"
 postgres_version        = "16"
 postgres_storage_mb     = 131072
@@ -28,8 +31,8 @@ aks_allowed_fqdns = [
   "*.grafana.com", "*.github.io", "*.amazonaws.com"
 ]
 alert_email             = "noelmathews123@gmail.com"
-devops_group_object_id  = "e0703be8-b8c7-4eab-9c3c-73ffc06843b8"
-devtest_group_object_id = "97012306-ede4-4162-8b23-be2a2c886b95"
+devops_group_object_id  = "d7cc1302-b243-42a6-9598-2a01399fa0a9"
+devtest_group_object_id = "d541efe9-9da2-445c-a73d-4a6320d47052"
 jumpbox_vm_size         = "Standard_B2ls_v2"
 tags = {
   Project = "FlowForge"

@@ -4,3 +4,6 @@ output "vpngw_id" {
 output "vpngw_public_ip" {
   value = azurerm_public_ip.vpngw_pip.ip_address
 }
+output "gateway_subnet_id" {
+  value = azurerm_subnet.gw.id
+}

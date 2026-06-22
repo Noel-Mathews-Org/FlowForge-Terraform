@@ -6,8 +6,8 @@ terraform {
     }
   }
   backend "azurerm" {
-    resource_group_name  = "Noel-STF"
-    storage_account_name = "noelstf98"
+    resource_group_name  = "NoelSTS-RG"
+    storage_account_name = "noelsts583"
     container_name       = "statefile"
     key                  = "prod.terraform.tfstate"
     use_oidc             = true

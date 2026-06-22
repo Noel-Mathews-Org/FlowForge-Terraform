@@ -58,8 +58,20 @@ variable "entra_audience" {
   type = string
 }
 
-variable "aks_vm_size" {
+variable "aks_system_vm_size" {
   type = string
+}
+
+variable "aks_user_vm_size" {
+  type = string
+}
+
+variable "aks_system_zones" {
+  type = list(string)
+}
+
+variable "aks_user_zones" {
+  type = list(string)
 }
 
 variable "postgres_sku" {

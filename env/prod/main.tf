@@ -1,5 +1,5 @@
 data "azurerm_resource_group" "main" {
-  name = "Noel-RG-Prod"
+  name = "Noel-RG"
 }
 
 data "azurerm_client_config" "current" {}
@@ -75,6 +75,8 @@ module "vpn_gateway" {
   vpn_client_address_pool    = var.vpn_client_address_pool
   entra_tenant_id            = data.azurerm_client_config.current.tenant_id
   entra_audience             = var.entra_audience
+  firewall_private_ip        = module.firewall.firewall_private_ip
+  spoke_vnet_cidr            = var.spoke_vnet_cidr
   depends_on                 = [module.firewall]
   tags                       = var.tags
 }
@@ -99,7 +101,10 @@ module "aks" {
   spoke_vnet_id              = module.spoke_network.spoke_vnet_id
   log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
   private_dns_zone_id        = module.hub_network.private_dns_zone_aks_id
-  aks_vm_size                = var.aks_vm_size
+  aks_system_vm_size         = var.aks_system_vm_size
+  aks_user_vm_size           = var.aks_user_vm_size
+  aks_system_zones           = var.aks_system_zones
+  aks_user_zones             = var.aks_user_zones
   aks_cluster_name           = "aks-${random_string.suffix.result}"
   spoke_resource_group_name  = data.azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
@@ -198,15 +203,6 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   depends_on                   = [module.vpn_gateway, module.firewall]
 }
 
-# Future 
-# module "policies" {
-#   source                     = "../../modules/policies"
-#   env                        = var.environment
-#
-#   location                   = var.location
-#   subscription_id            = var.subscription_id
-#   log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
-# }
 
 module "jumpbox" {
   source              = "../../modules/jumpbox"
@@ -266,12 +262,12 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
 resource "azurerm_user_assigned_identity" "github_actions" {
   name                = "mi-github-actions-prod"
   resource_group_name = data.azurerm_resource_group.main.name
-  location            = var.location
+  location            = var.location # Managed Identity for our CI pipeline
 }
 
 resource "azurerm_role_assignment" "github_acr_push" {
   scope                = azurerm_container_registry.acr.id
-  role_definition_name = "AcrPush"
+  role_definition_name = "AcrPush" # CI pipeline need to push image to ACR
   principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
 }
 
