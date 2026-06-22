@@ -34,8 +34,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
   local_account_disabled    = true
   oidc_issuer_enabled       = true
   workload_identity_enabled = true
-  kubernetes_version        = "1.34.8"
-  sku_tier                  = "Standard"
+  kubernetes_version        = var.kubernetes_version
+  sku_tier                  = var.sku_tier
 
   azure_active_directory_role_based_access_control {
     azure_rbac_enabled = true
@@ -82,7 +82,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
 }
 
 resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
-  name                  = "node"
+  name                  = "node1"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
   vm_size               = var.aks_user_vm_size
   vnet_subnet_id        = var.aks_subnet_id

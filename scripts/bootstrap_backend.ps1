@@ -2,9 +2,9 @@
 # Keep your own variables whenever running the script and make sure you are logged into azure cli
 $RESOURCE_GROUP_NAME  = "NoelSTS-RG"
 $LOCATION             = "centralindia"
-$STORAGE_ACCOUNT_NAME = "noelsts583"
+$STORAGE_ACCOUNT_NAME = "noelsts0910"
 $CONTAINER_NAME       = "statefile"
-$CONTRIBUTOR_OBJ_ID   = "************************"
+$CONTRIBUTOR_OBJ_ID   = "ee161602-2ab7-43b0-8509-94f4d5ebfc8f"
 # ==============================================================================
 
 $ErrorActionPreference = "Stop"

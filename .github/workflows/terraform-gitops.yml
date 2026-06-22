@@ -38,6 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: determine-env
     environment: ${{ needs.determine-env.outputs.env_name }}
+    outputs:
+      checkov_passed: ${{ steps.checkov-parse.outputs.passed }}
+      checkov_failed: ${{ steps.checkov-parse.outputs.failed }}
+      infracost_total: ${{ steps.infracost.outputs.total }}
+      infracost_diff: ${{ steps.infracost.outputs.diff }}
     env:
       TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
       TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
@@ -82,23 +87,78 @@ jobs:
         with:
           directory: env/${{ needs.determine-env.outputs.env_name }}
           framework: terraform
-          soft_fail: true 
+          soft_fail: true
+          output_format: cli,json
+          output_file_path: console,checkov.json
           
+      - name: Parse Checkov Results
+        id: checkov-parse
+        run: |
+          if [ -f $GITHUB_WORKSPACE/checkov.json ]; then
+            PASSED=$(jq '.summary.passed // 0' $GITHUB_WORKSPACE/checkov.json)
+            FAILED=$(jq '.summary.failed // 0' $GITHUB_WORKSPACE/checkov.json)
+          else
+            PASSED=0
+            FAILED=0
+          fi
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+
       - name: Setup Infracost
         uses: infracost/actions/setup@v3
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
           
       - name: Run Infracost Cost Estimate
+        id: infracost
         run: |
           terraform show -json tfplan > plan.json
+          infracost breakdown --path plan.json --format json --out-file infracost.json
           infracost breakdown --path plan.json --format table
+          
+          TOTAL=$(jq -r '.projects[0].breakdown.totalMonthlyCost // "0.00"' infracost.json)
+          DIFF=$(jq -r '.diffTotalMonthlyCost // "0.00"' infracost.json)
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "diff=$DIFF" >> $GITHUB_OUTPUT
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ needs.determine-env.outputs.env_name }}
           path: env/${{ needs.determine-env.outputs.env_name }}/tfplan
           retention-days: 1
+
+  notify-approval-required:
+    name: "Notify Approval Required"
+    needs: [determine-env, terraform-ci]
+    if: success() && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Approval Email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.DEVELOPMENT_TEAM_EMAIL }}
+          from: FlowForge DevOps <${{ secrets.MAIL_USERNAME }}>
+          subject: "⏳ Approval Required | Terraform CD | ${{ needs.determine-env.outputs.env_name }}"
+          html_body: |
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #ddd;border-radius:8px;overflow:hidden">
+              <div style="background:#f0ad4e;color:white;padding:20px">
+                <h2 style="margin:0;font-size:20px">⏳ Deployment Approval Required</h2>
+                <p style="margin:6px 0 0;opacity:0.9;font-size:14px">Environment: ${{ needs.determine-env.outputs.env_name }} | Triggered by: ${{ github.actor }}</p>
+              </div>
+              <div style="padding:20px">
+                <h3 style="margin:0 0 12px;font-size:14px;color:#6c757d;text-transform:uppercase">Security Scan (Checkov)</h3>
+                <p style="margin:0 0 10px;font-size:14px"><strong>Passed Checks:</strong> ${{ needs.terraform-ci.outputs.checkov_passed }}<br/><strong>Failed Checks:</strong> ${{ needs.terraform-ci.outputs.checkov_failed }}</p>
+                <h3 style="margin:20px 0 12px;font-size:14px;color:#6c757d;text-transform:uppercase">Cost Estimate (Infracost)</h3>
+                <p style="margin:0 0 20px;font-size:14px"><strong>Total Monthly Bill:</strong> $${{ needs.terraform-ci.outputs.infracost_total }}<br/><strong>Extra Cost:</strong> $${{ needs.terraform-ci.outputs.infracost_diff }}</p>
+                <div style="text-align:center;margin-top:20px">
+                  <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" style="background:#0366d6;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;display:inline-block">Review & Approve Deployment</a>
+                </div>
+              </div>
+            </div>
 
   terraform-cd:
     name: "Terraform CD (Apply)"

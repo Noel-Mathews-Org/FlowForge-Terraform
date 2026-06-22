@@ -134,3 +134,6 @@ variable "alert_email" {
   type        = string
   description = "Email address for Azure Monitor alerts"
 }
+
+variable "kubernetes_version" { type = string }
+variable "aks_sku_tier" { type = string }

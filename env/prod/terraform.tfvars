@@ -17,6 +17,8 @@ aks_system_vm_size      = "Standard_D2s_v3"
 aks_user_vm_size        = "Standard_D2s_v4"
 aks_system_zones        = ["2", "3"]
 aks_user_zones          = ["2", "3"]
+kubernetes_version      = "1.35"
+aks_sku_tier            = "Standard"
 postgres_sku            = "GP_Standard_D2ds_v5"
 postgres_version        = "16"
 postgres_storage_mb     = 131072
@@ -24,11 +26,11 @@ postgres_storage_tier   = "P10"
 redis_enterprise_sku    = "Balanced_B1"
 aks_allowed_fqdns = [
   "*.azure.com", "*.docker.io", "docker.io", "production.cloudflare.docker.com", "production.cloudfront.docker.com", "mcr.microsoft.com", "*.ubuntu.com", "*.ghcr.io", "ghcr.io", "*.azurecr.io", "*.pkg.dev", "*.helm.sh", "*.githubusercontent.com",
-  "github.com", "api.github.com", "*.quay.io", "quay.io", "*.letsencrypt.org", "letsencrypt.org", "*.k8s.io", "registry.k8s.io",
+  "github.com", "api.github.com", "*.github.com", "actions.github.com", "*.quay.io", "quay.io", "*.letsencrypt.org", "letsencrypt.org", "*.k8s.io", "registry.k8s.io",
   "*.azmk8s.io", "login.microsoftonline.com", "packages.microsoft.com", "*.data.mcr.microsoft.com", "*.cdn.mscr.io", "acs-mirror.azureedge.net",
   "*.ecr.aws", "public.ecr.aws", "*.cloudfront.net",
   "*.monitor.azure.com", "*.in.applicationinsights.azure.com", "dc.services.visualstudio.com",
-  "*.grafana.com", "*.github.io", "*.amazonaws.com"
+  "grafana.com", "*.grafana.com", "*.github.io", "*.amazonaws.com"
 ]
 alert_email             = "noelmathews123@gmail.com"
 devops_group_object_id  = "d7cc1302-b243-42a6-9598-2a01399fa0a9"

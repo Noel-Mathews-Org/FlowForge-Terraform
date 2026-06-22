@@ -101,6 +101,8 @@ module "aks" {
   spoke_vnet_id              = module.spoke_network.spoke_vnet_id
   log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
   private_dns_zone_id        = module.hub_network.private_dns_zone_aks_id
+  kubernetes_version         = var.kubernetes_version
+  sku_tier                   = var.aks_sku_tier
   aks_system_vm_size         = var.aks_system_vm_size
   aks_user_vm_size           = var.aks_user_vm_size
   aks_system_zones           = var.aks_system_zones

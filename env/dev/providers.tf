@@ -8,7 +8,7 @@ terraform {
   backend "azurerm" {
 
     resource_group_name  = "NoelSTS-RG"
-    storage_account_name = "noelsts583"
+    storage_account_name = "noelsts0910"
     container_name       = "statefile"
     key                  = "dev.terraform.tfstate"
     use_oidc             = true

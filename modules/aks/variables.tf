@@ -23,3 +23,6 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "kubernetes_version" { type = string }
+variable "sku_tier" { type = string }
