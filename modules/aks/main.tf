@@ -37,7 +37,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type                         = "VirtualMachineScaleSets"
     zones                        = var.aks_system_zones
     max_pods                     = 70
-    only_critical_addons_enabled = true
   }
 
   identity {
@@ -54,11 +53,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   oms_agent {
     log_analytics_workspace_id = var.log_analytics_workspace_id
-  }
-
-  monitor_metrics {
-    annotations_allowed = null
-    labels_allowed      = null
   }
 
   ingress_application_gateway {
