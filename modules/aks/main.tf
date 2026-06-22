@@ -35,7 +35,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     min_count            = 2
     max_count            = 3
     type                 = "VirtualMachineScaleSets"
-    zones                = var.aks_system_zones
+    # zones                = var.aks_system_zones
     max_pods             = 50
   }
 
@@ -51,9 +51,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     load_balancer_sku = "standard"
   }
 
-  ingress_application_gateway {
-    gateway_id = var.appgw_id
-  }
+  # ingress_application_gateway {
+  #   gateway_id = var.appgw_id
+  # }
 
   tags = merge({ Env = var.env, Layer = "spoke" }, var.tags)
 
@@ -71,27 +71,27 @@ resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
   min_count             = 2
   max_count             = 3
   max_pods              = 50
-  zones                 = var.aks_user_zones
+  # zones                 = var.aks_user_zones
 }
 
 data "azurerm_client_config" "current" {}
 
-resource "azurerm_role_assignment" "agic_appgw" {
-  scope                = var.appgw_id
-  role_definition_name = "Contributor" # AGIC needs contributor on Application Gateway
-  principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
-}
+# resource "azurerm_role_assignment" "agic_appgw" {
+#   scope                = var.appgw_id
+#   role_definition_name = "Contributor" # AGIC needs contributor on Application Gateway
+#   principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+# }
 
 
-resource "azurerm_role_assignment" "agic_rg" {
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}"
-  role_definition_name = "Reader" # AGIC needs Reader on Resource Group
-  principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
-}
+# resource "azurerm_role_assignment" "agic_rg" {
+#   scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}"
+#   role_definition_name = "Reader" # AGIC needs Reader on Resource Group
+#   principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+# }
 
 
-resource "azurerm_role_assignment" "agic_vnet" {
-  scope                = var.spoke_vnet_id
-  role_definition_name = "Network Contributor" # AGIC needs Network contributor on Vnet
-  principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
-}
+# resource "azurerm_role_assignment" "agic_vnet" {
+#   scope                = var.spoke_vnet_id
+#   role_definition_name = "Network Contributor" # AGIC needs Network contributor on Vnet
+#   principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+# }
