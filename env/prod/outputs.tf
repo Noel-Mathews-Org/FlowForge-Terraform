@@ -40,3 +40,8 @@ output "aks_kubeconfig_command" {
   description = "Command to get the kubeconfig for the AKS cluster"
   value       = "az aks get-credentials --resource-group ${data.azurerm_resource_group.main.name} --name ${module.aks.aks_cluster_name} --overwrite-existing"
 }
+
+output "app_insights_connection_string" {
+  value     = module.hub_network.app_insights_connection_string
+  sensitive = true
+}

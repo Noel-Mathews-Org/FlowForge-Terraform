@@ -28,3 +28,8 @@ output "private_dns_zone_redis_id" {
 output "private_dns_zone_aks_id" {
   value = azurerm_private_dns_zone.aks.id
 }
+
+output "app_insights_connection_string" {
+  value     = azurerm_application_insights.appinsights.connection_string
+  sensitive = true
+}
