@@ -35,6 +35,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   oidc_issuer_enabled       = true
   workload_identity_enabled = true
   kubernetes_version        = "1.34.8"
+  sku_tier                  = "Standard"
 
   azure_active_directory_role_based_access_control {
     azure_rbac_enabled = true
@@ -67,6 +68,10 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   ingress_application_gateway {
     gateway_id = var.appgw_id
+  }
+
+  oms_agent {
+    log_analytics_workspace_id = var.log_analytics_workspace_id
   }
 
   tags = merge({ Env = var.env, Layer = "spoke" }, var.tags)
