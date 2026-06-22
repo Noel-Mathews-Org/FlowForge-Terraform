@@ -25,16 +25,16 @@ resource "time_sleep" "wait_for_rbac" {
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = var.aks_cluster_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  dns_prefix          = "aks-${var.env}"
-
+  name                      = var.aks_cluster_name
+  location                  = var.location
+  resource_group_name       = var.resource_group_name
+  dns_prefix                = "aks-${var.env}"
   private_cluster_enabled   = true
   private_dns_zone_id       = var.private_dns_zone_id
   local_account_disabled    = true
   oidc_issuer_enabled       = true
   workload_identity_enabled = true
+  kubernetes_version        = "1.34.8"
 
   azure_active_directory_role_based_access_control {
     azure_rbac_enabled = true
