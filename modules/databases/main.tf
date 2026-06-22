@@ -14,8 +14,7 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   zone                          = "2"
 
   high_availability {
-    mode                      = "ZoneRedundant"
-    standby_availability_zone = "3"
+    mode = "SameZone"
   }
 
   administrator_login    = var.postgres_admin_username
