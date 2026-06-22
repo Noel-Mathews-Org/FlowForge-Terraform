@@ -10,6 +10,20 @@ resource "azurerm_role_assignment" "aks_dns_contributor" {
   principal_id         = azurerm_user_assigned_identity.aks_identity.principal_id
 }
 
+resource "azurerm_role_assignment" "aks_network_contributor" {
+  scope                = var.aks_subnet_id
+  role_definition_name = "Network Contributor" 
+  principal_id         = azurerm_user_assigned_identity.aks_identity.principal_id
+}
+
+resource "time_sleep" "wait_for_rbac" {
+  depends_on = [
+    azurerm_role_assignment.aks_dns_contributor,
+    azurerm_role_assignment.aks_network_contributor
+  ]
+  create_duration = "90s"
+}
+
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = var.aks_cluster_name
   location            = var.location
@@ -58,7 +72,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   tags = merge({ Env = var.env, Layer = "spoke" }, var.tags)
 
   depends_on = [
-    azurerm_role_assignment.aks_dns_contributor
+    time_sleep.wait_for_rbac
   ]
 }
 
