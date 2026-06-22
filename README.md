@@ -64,7 +64,6 @@ The App Registration needs explicit permissions to interact with your Azure envi
    - Select **User, group, or service principal**.
    - Search for your App Registration in Enterprise Application and copy the object ID and assign the role.
 
-
 2. **Contributor Role (Infrastructure Provisioning)**
    - Repeat the steps above on the exact same Resource Group, but assign the **Contributor** role so Terraform can build/modify resources inside it.
 
