@@ -109,6 +109,7 @@ jobs:
       TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
       TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
       TF_VAR_jumpbox_admin_password: ${{ secrets.JUMPBOX_ADMIN_PASSWORD }}
+      TF_LOG: DEBUG
     defaults:
       run:
         working-directory: env/${{ needs.determine-env.outputs.env_name }}
