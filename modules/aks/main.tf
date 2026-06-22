@@ -35,7 +35,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     min_count            = 2
     max_count            = 3
     type                 = "VirtualMachineScaleSets"
-    max_pods             = 30
+    zones                = var.aks_system_zones
+    max_pods             = 50
   }
 
   identity {
@@ -73,7 +74,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
   auto_scaling_enabled  = true
   min_count             = 2
   max_count             = 3
-  max_pods              = 30
+  max_pods              = 50
+  zones                 = var.aks_user_zones
 }
 
 data "azurerm_client_config" "current" {}

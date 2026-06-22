@@ -105,7 +105,7 @@ module "aks" {
   aks_user_vm_size           = var.aks_user_vm_size
   aks_system_zones           = var.aks_system_zones
   aks_user_zones             = var.aks_user_zones
-  aks_cluster_name           = "aks-${random_string.suffix.result}-v2"
+  aks_cluster_name           = "aks-${random_string.suffix.result}"
   spoke_resource_group_name  = data.azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   aks_outbound_type          = "userDefinedRouting"
