@@ -164,6 +164,7 @@ module "key_vault" {
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
   tenant_id                         = data.azurerm_client_config.current.tenant_id
   aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity[each.key].principal_id
+  arc_managed_identity_principal_id = azurerm_user_assigned_identity.arc_identity.principal_id
   key_vault_name                    = "kvlt-${each.key}-${random_string.suffix.result}"
   tags                              = var.tags
 }
@@ -285,6 +286,20 @@ resource "azurerm_federated_identity_credential" "github_fid" {
   issuer                    = "https://token.actions.githubusercontent.com"
   user_assigned_identity_id = azurerm_user_assigned_identity.github_actions.id
   subject                   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
+}
+
+resource "azurerm_user_assigned_identity" "arc_identity" {
+  name                = "mi-arc-runner-${random_string.suffix.result}"
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+}
+
+resource "azurerm_federated_identity_credential" "arc_fid" {
+  name                      = "fid-arc-runner"
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = module.aks.oidc_issuer_url
+  user_assigned_identity_id = azurerm_user_assigned_identity.arc_identity.id
+  subject                   = "system:serviceaccount:arc-system:arc-runner-sa"
 }
 
 resource "azurerm_role_assignment" "aks_cluster_admin" {

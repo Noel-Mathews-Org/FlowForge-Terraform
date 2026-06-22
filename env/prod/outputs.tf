@@ -31,6 +31,11 @@ output "github_actions_client_id" {
   value       = azurerm_user_assigned_identity.github_actions.client_id
 }
 
+output "arc_runner_client_id" {
+  description = "Client ID of the ARC Managed Identity for Workload Identity Federation"
+  value       = azurerm_user_assigned_identity.arc_identity.client_id
+}
+
 output "jumpbox_private_ip" {
   description = "The private IP of the jumpbox for SSH access"
   value       = module.jumpbox.jumpbox_private_ip

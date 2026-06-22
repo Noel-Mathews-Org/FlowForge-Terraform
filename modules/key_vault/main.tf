@@ -20,6 +20,12 @@ resource "azurerm_role_assignment" "aks_kv_secrets_user" {
   principal_id         = var.aks_managed_identity_principal_id
 }
 
+resource "azurerm_role_assignment" "arc_kv_secrets_officer" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets Officer" # ARC needs to write secrets
+  principal_id         = var.arc_managed_identity_principal_id
+}
+
 
 resource "azurerm_private_endpoint" "pe_kv" {
   name                = "pe-kv-${var.env}"
