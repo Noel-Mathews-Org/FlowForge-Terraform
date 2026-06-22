@@ -53,6 +53,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     zones                        = var.aks_system_zones
     max_pods                     = 50
     only_critical_addons_enabled = true
+    temporary_name_for_rotation  = "temp-system"
   }
 
   identity {
