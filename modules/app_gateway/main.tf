@@ -116,7 +116,7 @@ resource "azurerm_web_application_firewall_policy" "waf" {
         variable_name = "RequestUri"
       }
       operator     = "Contains"
-      match_values = ["/api/ds/query", "/api/datasources/proxy", "/api/datasources/uid/"]
+      match_values = ["/api/ds/query", "/api/datasources/", "/apis/dashboard.grafana.app/", "/api/dashboards/"]
     }
   }
 
