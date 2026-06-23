@@ -115,8 +115,8 @@ resource "azurerm_web_application_firewall_policy" "waf" {
       match_variables {
         variable_name = "RequestUri"
       }
-      operator           = "Contains"
-      match_values       = ["/api/ds/query", "/api/datasources/proxy"]
+      operator     = "Contains"
+      match_values = ["/api/ds/query", "/api/datasources/proxy"]
     }
   }
 
