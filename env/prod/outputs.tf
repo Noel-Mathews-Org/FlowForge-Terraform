@@ -50,3 +50,13 @@ output "app_insights_connection_string" {
   value     = module.hub_network.app_insights_connection_string
   sensitive = true
 }
+
+output "app_gateway_public_ip" {
+  description = "Public IP Address of the Application Gateway"
+  value       = module.app_gateway.appgw_pip_address
+}
+
+output "ai_foundry_endpoint" {
+  description = "The project endpoint URL of the Azure AI Foundry"
+  value       = module.ai_foundry.cognitive_account_endpoint
+}

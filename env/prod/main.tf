@@ -302,6 +302,59 @@ resource "azurerm_federated_identity_credential" "arc_fid" {
   subject                   = "system:serviceaccount:arc-system:arc-runner-sa"
 }
 
+resource "azurerm_user_assigned_identity" "otel_identity" {
+  name                = "mi-flowforge-otel-${random_string.suffix.result}"
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+}
+
+resource "azurerm_role_assignment" "otel_metrics_publisher" {
+  scope                = data.azurerm_resource_group.main.id
+  role_definition_name = "Monitoring Metrics Publisher"
+  principal_id         = azurerm_user_assigned_identity.otel_identity.principal_id
+}
+
+resource "azurerm_federated_identity_credential" "otel_fid" {
+  for_each                  = toset(local.environments)
+  name                      = "fid-otel-${each.key}"
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = module.aks.oidc_issuer_url
+  user_assigned_identity_id = azurerm_user_assigned_identity.otel_identity.id
+  subject                   = "system:serviceaccount:flowforge-${each.key}:otel-collector-sa"
+}
+
+resource "azurerm_user_assigned_identity" "ai_identity" {
+  for_each            = toset(local.environments)
+  name                = "mi-ai-${each.key}-${random_string.suffix.result}"
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+}
+
+resource "azurerm_federated_identity_credential" "ai_fid" {
+  for_each                  = toset(local.environments)
+  name                      = "fid-ai-${each.key}"
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = module.aks.oidc_issuer_url
+  user_assigned_identity_id = azurerm_user_assigned_identity.ai_identity[each.key].id
+  subject                   = "system:serviceaccount:flowforge-${each.key}:flowforge-${each.key}-analysis-service"
+}
+
+module "ai_foundry" {
+  source                 = "../../modules/ai_foundry"
+  resource_group_name    = data.azurerm_resource_group.main.name
+  location               = "eastus2"
+  cognitive_account_name = "ai-${random_string.suffix.result}"
+  model_name             = "summary-agent"
+  tags                   = var.tags
+}
+
+resource "azurerm_role_assignment" "ai_openai_user" {
+  for_each             = toset(local.environments)
+  scope                = module.ai_foundry.cognitive_account_id
+  role_definition_name = "Cognitive Services OpenAI User"
+  principal_id         = azurerm_user_assigned_identity.ai_identity[each.key].principal_id
+}
+
 resource "azurerm_role_assignment" "aks_cluster_admin" {
   scope                = module.aks.aks_id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
@@ -309,7 +362,7 @@ resource "azurerm_role_assignment" "aks_cluster_admin" {
 }
 
 resource "azurerm_role_assignment" "aks_devtest_reader" {
-  scope                = "${module.aks.aks_id}/namespaces/flowforge"
+  scope                = "${module.aks.aks_id}/namespaces/flowforge-dev"
   role_definition_name = "Azure Kubernetes Service RBAC Reader"
   principal_id         = var.devtest_group_object_id
 }
