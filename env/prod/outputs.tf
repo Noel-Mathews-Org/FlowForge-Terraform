@@ -60,3 +60,8 @@ output "ai_foundry_endpoint" {
   description = "The project endpoint URL of the Azure AI Foundry"
   value       = module.ai_foundry.cognitive_account_endpoint
 }
+
+output "ai_identity_client_ids" {
+  description = "The Workload Identity Client IDs for Analysis Service per environment"
+  value       = { for k, v in azurerm_user_assigned_identity.ai_identity : k => v.client_id }
+}

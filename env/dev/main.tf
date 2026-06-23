@@ -223,7 +223,7 @@ resource "azurerm_user_assigned_identity" "app_identity" {
 }
 
 locals {
-  microservices = ["frontend", "gateway", "auth-service", "project-service", "task-service", "analysis-service", "notification-worker"]
+  microservices = ["frontend", "gateway", "auth-service", "project-service", "task-service", "notification-worker"]
   environments  = ["dev", "prod"]
   fid_combinations = flatten([
     for env in local.environments : [

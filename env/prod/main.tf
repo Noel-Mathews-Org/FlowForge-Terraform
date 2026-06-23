@@ -227,7 +227,7 @@ resource "azurerm_user_assigned_identity" "app_identity" {
 }
 
 locals {
-  microservices = ["frontend", "gateway", "auth-service", "project-service", "task-service", "analysis-service", "notification-worker"]
+  microservices = ["frontend", "gateway", "auth-service", "project-service", "task-service", "notification-worker"]
   environments  = ["dev", "prod"]
   fid_combinations = flatten([
     for env in local.environments : [
@@ -352,6 +352,20 @@ resource "azurerm_role_assignment" "ai_openai_user" {
   for_each             = toset(local.environments)
   scope                = module.ai_foundry.cognitive_account_id
   role_definition_name = "Cognitive Services OpenAI User"
+  principal_id         = azurerm_user_assigned_identity.ai_identity[each.key].principal_id
+}
+
+resource "azurerm_role_assignment" "ai_kv_secrets_user" {
+  for_each             = toset(local.environments)
+  scope                = module.key_vault[each.key].kv_id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.ai_identity[each.key].principal_id
+}
+
+resource "azurerm_role_assignment" "ai_storage_blob_data_contributor" {
+  for_each             = toset(local.environments)
+  scope                = module.storage[each.key].storage_account_id
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.ai_identity[each.key].principal_id
 }
 
