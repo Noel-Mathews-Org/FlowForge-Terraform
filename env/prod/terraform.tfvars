@@ -30,7 +30,7 @@ aks_allowed_fqdns = [
   "*.azmk8s.io", "login.microsoftonline.com", "packages.microsoft.com", "*.data.mcr.microsoft.com", "*.cdn.mscr.io", "acs-mirror.azureedge.net",
   "*.ecr.aws", "public.ecr.aws", "*.cloudfront.net",
   "*.monitor.azure.com", "*.in.applicationinsights.azure.com", "dc.services.visualstudio.com",
-  "grafana.com", "*.grafana.com", "*.github.io", "*.amazonaws.com"
+  "grafana.com", "*.grafana.com", "*.github.io", "*.amazonaws.com", "hooks.slack.com"
 ]
 alert_email             = "noelmathews123@gmail.com"
 devops_group_object_id  = "76404b8f-f4c9-4627-b922-ce1f6e8f6197"
