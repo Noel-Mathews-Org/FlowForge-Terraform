@@ -276,7 +276,7 @@ resource "azurerm_role_assignment" "github_acr_push" {
 }
 
 locals {
-  github_branches = ["Cloud-Track-dev", "main"]
+  github_branches = ["Cloud-Track-dev"]
 }
 
 resource "azurerm_federated_identity_credential" "github_fid" {
@@ -286,6 +286,14 @@ resource "azurerm_federated_identity_credential" "github_fid" {
   issuer                    = "https://token.actions.githubusercontent.com"
   user_assigned_identity_id = azurerm_user_assigned_identity.github_actions.id
   subject                   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/${each.key}"
+}
+
+resource "azurerm_federated_identity_credential" "github_fid_env" {
+  name                      = "fid-github-env-production"
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = "https://token.actions.githubusercontent.com"
+  user_assigned_identity_id = azurerm_user_assigned_identity.github_actions.id
+  subject                   = "repo:Noel-Mathews-Org/FlowForge:environment:production"
 }
 
 resource "azurerm_user_assigned_identity" "arc_identity" {
