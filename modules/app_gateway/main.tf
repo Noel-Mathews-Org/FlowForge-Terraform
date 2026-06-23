@@ -105,6 +105,21 @@ resource "azurerm_web_application_firewall_policy" "waf" {
     }
   }
 
+  custom_rules {
+    name      = "AllowGrafanaQueries"
+    priority  = 10
+    rule_type = "MatchRule"
+    action    = "Allow"
+
+    match_conditions {
+      match_variables {
+        variable_name = "RequestUri"
+      }
+      operator           = "Contains"
+      match_values       = ["/api/ds/query", "/api/datasources/proxy"]
+    }
+  }
+
   tags = merge({ Env = var.env, Layer = "spoke" }, var.tags)
 }
 
