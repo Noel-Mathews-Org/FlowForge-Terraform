@@ -148,14 +148,25 @@ module "monitoring" {
   appgw_id            = module.app_gateway.appgw_id
   postgres_id         = module.databases.postgres_id
   redis_id            = module.databases.redis_id
-  kv_id               = data.azurerm_key_vault.kv["prod"].id
+  kv_id               = module.key_vault["prod"].kv_id
   alert_email         = var.alert_email
 }
 
-data "azurerm_key_vault" "kv" {
-  for_each            = toset(local.environments)
-  name                = "kvlt-${each.key}-m9mp04"
-  resource_group_name = data.azurerm_resource_group.main.name
+module "key_vault" {
+  source   = "../../modules/key_vault"
+  for_each = toset(local.environments)
+
+  resource_group_name               = data.azurerm_resource_group.main.name
+  location                          = var.location
+  env                               = each.key
+  pe_subnet_id                      = module.spoke_network.pe_subnet_id
+  private_dns_zone_kv_id            = module.hub_network.private_dns_zone_kv_id
+  log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
+  tenant_id                         = data.azurerm_client_config.current.tenant_id
+  aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity[each.key].principal_id
+  arc_managed_identity_principal_id = azurerm_user_assigned_identity.arc_identity.principal_id
+  key_vault_name                    = "kvlt-${each.key}-${random_string.suffix.result}"
+  tags                              = var.tags
 }
 
 module "storage" {
@@ -168,7 +179,7 @@ module "storage" {
   pe_subnet_id                      = module.spoke_network.pe_subnet_id
   private_dns_zone_storage_id       = module.hub_network.private_dns_zone_storage_id
   log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
-  aks_managed_identity_principal_id = data.azurerm_user_assigned_identity.app_identity[each.key].principal_id
+  aks_managed_identity_principal_id = azurerm_user_assigned_identity.app_identity[each.key].principal_id
   storage_account_name              = "${random_string.suffix.result}ff${each.key}"
   tags                              = var.tags
 }
@@ -208,10 +219,11 @@ module "jumpbox" {
   tags                = var.tags
 }
 
-data "azurerm_user_assigned_identity" "app_identity" {
+resource "azurerm_user_assigned_identity" "app_identity" {
   for_each            = toset(local.environments)
   name                = "mi-flowforge-app-${each.key}"
   resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
 }
 
 locals {
@@ -232,7 +244,7 @@ resource "azurerm_federated_identity_credential" "app_fid" {
   name                      = "fid-flowforge-${each.key}"
   audience                  = ["api://AzureADTokenExchange"]
   issuer                    = module.aks.oidc_issuer_url
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.app_identity[each.value.env].id
+  user_assigned_identity_id = azurerm_user_assigned_identity.app_identity[each.value.env].id
   subject                   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
 }
 
@@ -248,22 +260,23 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
 }
 
 
-data "azurerm_user_assigned_identity" "github_actions" {
+resource "azurerm_user_assigned_identity" "github_actions" {
   name                = "mi-github-actions-prod"
   resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location # Managed Identity for our CI pipeline
 }
 
 resource "azurerm_role_assignment" "github_acr_push" {
   scope                = data.azurerm_container_registry.acr.id
   role_definition_name = "AcrPush" # CI pipeline need to push image to ACR
-  principal_id         = data.azurerm_user_assigned_identity.github_actions.principal_id
+  principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
 }
 
 resource "azurerm_federated_identity_credential" "github_fid_dev_branch" {
   name                      = "fid-github-Cloud-Track-dev"
   audience                  = ["api://AzureADTokenExchange"]
   issuer                    = "https://token.actions.githubusercontent.com"
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.github_actions.id
+  user_assigned_identity_id = azurerm_user_assigned_identity.github_actions.id
   subject                   = "repo:Noel-Mathews-Org/FlowForge:ref:refs/heads/Cloud-Track-dev"
 }
 
@@ -271,32 +284,34 @@ resource "azurerm_federated_identity_credential" "github_fid_prod_env" {
   name                      = "fid-github-env-prod"
   audience                  = ["api://AzureADTokenExchange"]
   issuer                    = "https://token.actions.githubusercontent.com"
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.github_actions.id
+  user_assigned_identity_id = azurerm_user_assigned_identity.github_actions.id
   subject                   = "repo:Noel-Mathews-Org/FlowForge:environment:prod"
 }
 
-data "azurerm_user_assigned_identity" "arc_identity" {
-  name                = "mi-arc-runner-m9mp04"
+resource "azurerm_user_assigned_identity" "arc_identity" {
+  name                = "mi-arc-runner-${random_string.suffix.result}"
   resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
 }
 
 resource "azurerm_federated_identity_credential" "arc_fid" {
   name                      = "fid-arc-runner"
   audience                  = ["api://AzureADTokenExchange"]
   issuer                    = module.aks.oidc_issuer_url
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.arc_identity.id
+  user_assigned_identity_id = azurerm_user_assigned_identity.arc_identity.id
   subject                   = "system:serviceaccount:arc-system:arc-runner-sa"
 }
 
-data "azurerm_user_assigned_identity" "otel_identity" {
-  name                = "mi-flowforge-otel-m9mp04"
+resource "azurerm_user_assigned_identity" "otel_identity" {
+  name                = "mi-flowforge-otel-${random_string.suffix.result}"
   resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
 }
 
 resource "azurerm_role_assignment" "otel_metrics_publisher" {
   scope                = data.azurerm_resource_group.main.id
   role_definition_name = "Monitoring Metrics Publisher"
-  principal_id         = data.azurerm_user_assigned_identity.otel_identity.principal_id
+  principal_id         = azurerm_user_assigned_identity.otel_identity.principal_id
 }
 
 resource "azurerm_federated_identity_credential" "otel_fid" {
@@ -304,14 +319,15 @@ resource "azurerm_federated_identity_credential" "otel_fid" {
   name                      = "fid-otel-${each.key}"
   audience                  = ["api://AzureADTokenExchange"]
   issuer                    = module.aks.oidc_issuer_url
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.otel_identity.id
+  user_assigned_identity_id = azurerm_user_assigned_identity.otel_identity.id
   subject                   = "system:serviceaccount:flowforge-${each.key}:otel-collector-sa"
 }
 
-data "azurerm_user_assigned_identity" "ai_identity" {
+resource "azurerm_user_assigned_identity" "ai_identity" {
   for_each            = toset(local.environments)
-  name                = "mi-ai-${each.key}-m9mp04"
+  name                = "mi-ai-${each.key}-${random_string.suffix.result}"
   resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
 }
 
 resource "azurerm_federated_identity_credential" "ai_fid" {
@@ -319,7 +335,7 @@ resource "azurerm_federated_identity_credential" "ai_fid" {
   name                      = "fid-ai-${each.key}"
   audience                  = ["api://AzureADTokenExchange"]
   issuer                    = module.aks.oidc_issuer_url
-  user_assigned_identity_id = data.azurerm_user_assigned_identity.ai_identity[each.key].id
+  user_assigned_identity_id = azurerm_user_assigned_identity.ai_identity[each.key].id
   subject                   = "system:serviceaccount:flowforge-${each.key}:flowforge-${each.key}-analysis-service"
 }
 
@@ -336,21 +352,21 @@ resource "azurerm_role_assignment" "ai_openai_user" {
   for_each             = toset(local.environments)
   scope                = module.ai_foundry.cognitive_account_id
   role_definition_name = "Cognitive Services OpenAI User"
-  principal_id         = data.azurerm_user_assigned_identity.ai_identity[each.key].principal_id
+  principal_id         = azurerm_user_assigned_identity.ai_identity[each.key].principal_id
 }
 
 resource "azurerm_role_assignment" "ai_kv_secrets_user" {
   for_each             = toset(local.environments)
-  scope                = data.azurerm_key_vault.kv[each.key].id
+  scope                = module.key_vault[each.key].kv_id
   role_definition_name = "Key Vault Secrets User"
-  principal_id         = data.azurerm_user_assigned_identity.ai_identity[each.key].principal_id
+  principal_id         = azurerm_user_assigned_identity.ai_identity[each.key].principal_id
 }
 
 resource "azurerm_role_assignment" "ai_storage_blob_data_contributor" {
   for_each             = toset(local.environments)
   scope                = module.storage[each.key].storage_account_id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.ai_identity[each.key].principal_id
+  principal_id         = azurerm_user_assigned_identity.ai_identity[each.key].principal_id
 }
 
 resource "azurerm_role_assignment" "aks_cluster_admin" {
