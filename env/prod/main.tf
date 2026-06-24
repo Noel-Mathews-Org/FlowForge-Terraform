@@ -208,9 +208,17 @@ module "jumpbox" {
   tags                = var.tags
 }
 
-data "azurerm_user_assigned_identity" "app_identity" {
-  for_each            = toset(local.environments)
-  name                = "mi-flowforge-app-${each.key}"
+module "ai_foundry" {
+  source                 = "../../modules/ai_foundry"
+  resource_group_name    = data.azurerm_resource_group.main.name
+  location               = "eastus2"
+  cognitive_account_name = "ai-${random_string.suffix.result}"
+  model_name             = "summary-agent"
+  tags                   = var.tags
+}
+
+data "azurerm_container_registry" "acr" {
+  name                = "flowforgeacrm9mp04"
   resource_group_name = data.azurerm_resource_group.main.name
 }
 
@@ -227,6 +235,12 @@ locals {
   ])
 }
 
+data "azurerm_user_assigned_identity" "app_identity" {
+  for_each            = toset(local.environments)
+  name                = "mi-flowforge-app-${each.key}"
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+
 resource "azurerm_federated_identity_credential" "app_fid" {
   for_each                  = { for combo in local.fid_combinations : "${combo.env}-${combo.svc}" => combo }
   name                      = "fid-flowforge-${each.key}"
@@ -234,11 +248,6 @@ resource "azurerm_federated_identity_credential" "app_fid" {
   issuer                    = module.aks.oidc_issuer_url
   user_assigned_identity_id = data.azurerm_user_assigned_identity.app_identity[each.value.env].id
   subject                   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
-}
-
-data "azurerm_container_registry" "acr" {
-  name                = "flowforgeacrm9mp04"
-  resource_group_name = data.azurerm_resource_group.main.name
 }
 
 resource "azurerm_role_assignment" "aks_acr_pull" {
@@ -323,14 +332,6 @@ resource "azurerm_federated_identity_credential" "ai_fid" {
   subject                   = "system:serviceaccount:flowforge-${each.key}:flowforge-${each.key}-analysis-service"
 }
 
-module "ai_foundry" {
-  source                 = "../../modules/ai_foundry"
-  resource_group_name    = data.azurerm_resource_group.main.name
-  location               = "eastus2"
-  cognitive_account_name = "ai-${random_string.suffix.result}"
-  model_name             = "summary-agent"
-  tags                   = var.tags
-}
 
 resource "azurerm_role_assignment" "ai_openai_user" {
   for_each             = toset(local.environments)
