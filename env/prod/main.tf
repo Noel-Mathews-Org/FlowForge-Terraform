@@ -148,14 +148,26 @@ module "monitoring" {
   appgw_id            = module.app_gateway.appgw_id
   postgres_id         = module.databases.postgres_id
   redis_id            = module.databases.redis_id
-  kv_id               = data.azurerm_key_vault.kv["prod"].id
+  kv_id               = module.key_vault["prod"].kv_id
   alert_email         = var.alert_email
 }
 
-data "azurerm_key_vault" "kv" {
+module "key_vault" {
+  source              = "../../modules/key_vault"
   for_each            = toset(local.environments)
-  name                = "kvlt-${each.key}-m9mp04"
   resource_group_name = data.azurerm_resource_group.main.name
+  location            = var.location
+  env                 = each.key
+  key_vault_name      = "kvlt-${each.key}-${random_string.suffix.result}"
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+
+  pe_subnet_id                      = module.spoke_network.pe_subnet_id
+  private_dns_zone_kv_id            = module.hub_network.private_dns_zone_kv_id
+  log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
+  aks_managed_identity_principal_id = data.azurerm_user_assigned_identity.app_identity[each.key].principal_id
+  arc_managed_identity_principal_id = data.azurerm_user_assigned_identity.arc_identity.principal_id
+
+  tags = var.tags
 }
 
 module "storage" {
@@ -342,7 +354,7 @@ resource "azurerm_role_assignment" "ai_openai_user" {
 
 resource "azurerm_role_assignment" "ai_kv_secrets_user" {
   for_each             = toset(local.environments)
-  scope                = data.azurerm_key_vault.kv[each.key].id
+  scope                = module.key_vault[each.key].kv_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = data.azurerm_user_assigned_identity.ai_identity[each.key].principal_id
 }
