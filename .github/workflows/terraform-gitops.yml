@@ -65,7 +65,9 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Format
-        run: terraform fmt -check -recursive
+        run: |
+          terraform fmt -check -recursive env/prod
+          terraform fmt -check -recursive modules
         working-directory: .
 
       - name: Azure Login

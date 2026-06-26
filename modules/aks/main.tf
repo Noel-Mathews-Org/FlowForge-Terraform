@@ -43,17 +43,16 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   default_node_pool {
-    name                         = "system"
-    vm_size                      = var.aks_system_vm_size
-    vnet_subnet_id               = var.aks_subnet_id
-    auto_scaling_enabled         = true
-    min_count                    = 2
-    max_count                    = 3
-    type                         = "VirtualMachineScaleSets"
-    zones                        = var.aks_system_zones
-    max_pods                     = 50
+    name                 = "system"
+    vm_size              = var.aks_system_vm_size
+    vnet_subnet_id       = var.aks_subnet_id
+    auto_scaling_enabled = true
+    min_count            = 2
+    max_count            = 3
+    type                 = "VirtualMachineScaleSets"
+    zones                = var.aks_system_zones
+    max_pods             = 50
     #only_critical_addons_enabled = true
-    
   }
 
   identity {
