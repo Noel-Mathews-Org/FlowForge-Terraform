@@ -86,6 +86,7 @@ The following secrets must be populated in the target GitHub Environment (`dev` 
 * `ENTRA_GROUP_MANAGER` -> Key Vault: `entra-group-manager`
 * `ENTRA_GROUP_MEMBER` -> Key Vault: `entra-group-member`
 
+
 *(It also uses `MAIL_USERNAME`, `MAIL_PASSWORD`, and `DEVELOPMENT_TEAM_EMAIL` to send the final notification email).*
 
 ### Setup Instructions
