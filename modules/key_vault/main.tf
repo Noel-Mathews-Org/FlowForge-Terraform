@@ -13,20 +13,6 @@ resource "azurerm_key_vault" "kv" {
   tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 }
 
-
-resource "azurerm_role_assignment" "aks_kv_secrets_user" {
-  scope                = azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Secrets User" # AKS need to read secrets so this role is given
-  principal_id         = var.aks_managed_identity_principal_id
-}
-
-resource "azurerm_role_assignment" "arc_kv_secrets_officer" {
-  scope                = azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Secrets Officer" # ARC needs to write secrets
-  principal_id         = var.arc_managed_identity_principal_id
-}
-
-
 resource "azurerm_private_endpoint" "pe_kv" {
   name                = "pe-kv-${var.env}"
   location            = var.location
@@ -50,16 +36,13 @@ resource "azurerm_private_endpoint" "pe_kv" {
 
 
 resource "azurerm_monitor_diagnostic_setting" "kv_diag" {
+  count                      = var.log_analytics_workspace_id != null ? 1 : 0
   name                       = "diag-kv-${var.env}"
   target_resource_id         = azurerm_key_vault.kv.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
   enabled_log {
     category = "AuditEvent"
-  }
-
-  enabled_metric {
-    category = "AllMetrics"
   }
 }
 

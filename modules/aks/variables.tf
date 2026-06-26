@@ -17,7 +17,8 @@ variable "aks_outbound_type" {
 variable "private_dns_zone_id" { type = string }
 variable "tenant_id" { type = string }
 variable "aks_cluster_name" { type = string }
-
+variable "devops_group_object_id" { type = string }
+variable "devtest_group_object_id" { type = string }
 
 variable "tags" {
   type    = map(string)

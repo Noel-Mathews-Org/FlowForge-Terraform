@@ -1,10 +1,56 @@
+resource "azurerm_log_analytics_workspace" "law" {
+  name                = "law-${var.env}-hub"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  sku                 = "PerGB2018"
+  retention_in_days   = 7     
+  daily_quota_gb      = 1      
+  tags = merge({
+    Env   = var.env
+    Layer = "hub ${var.env}"
+  }, var.tags)
+}
+
+resource "azurerm_application_insights" "appinsights" {
+  name                = "appi-${var.env}-hub"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  workspace_id        = azurerm_log_analytics_workspace.law.id
+  application_type    = "web"
+  tags = merge({
+    Env   = var.env
+    Layer = "hub ${var.env}"
+  }, var.tags)
+}
+
+
+resource "azurerm_role_assignment" "law_reader" {
+  scope                = azurerm_log_analytics_workspace.law.id
+  role_definition_name = "Log Analytics Reader"
+  principal_id         = var.devops_group_object_id
+}
+
+
+resource "azurerm_log_analytics_workspace_table" "container_log_v2" {
+  workspace_id = azurerm_log_analytics_workspace.law.id
+  name         = "ContainerLogV2"
+  plan         = "Basic"
+}
+
+resource "azurerm_log_analytics_workspace_table" "container_log" {
+  workspace_id = azurerm_log_analytics_workspace.law.id
+  name         = "ContainerLog"
+  plan         = "Basic"
+}
+
+
 resource "azurerm_monitor_action_group" "main" {
   name                = "ag-flowforge-${var.env}"
   resource_group_name = var.resource_group_name
   short_name          = "ff-alerts"
 
   email_receiver {
-    name          = "sendtoadmin"
+    name          = "SendtoAdmin"
     email_address = var.alert_email
   }
 }
@@ -13,7 +59,7 @@ resource "azurerm_monitor_metric_alert" "appgw_5xx" {
   name                = "alert-appgw-5xx-${var.env}"
   resource_group_name = var.resource_group_name
   scopes              = [var.appgw_id]
-  description         = "Action will be triggered when 5xx count is greater than 10."
+  description         = "Action will be triggered when 5xx Error count is greater than 10."
 
   criteria {
     metric_namespace = "Microsoft.Network/applicationGateways"

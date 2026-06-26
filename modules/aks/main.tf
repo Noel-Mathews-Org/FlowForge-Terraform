@@ -115,3 +115,16 @@ resource "azurerm_role_assignment" "agic_vnet" {
   role_definition_name = "Network Contributor" # AGIC needs Network contributor on Vnet
   principal_id         = azurerm_kubernetes_cluster.aks.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
 }
+
+# Azure RBAC on AKS
+resource "azurerm_role_assignment" "aks_cluster_admin" {
+  scope                = azurerm_kubernetes_cluster.aks.id
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  principal_id         = var.devops_group_object_id
+}
+
+resource "azurerm_role_assignment" "aks_devtest_reader" {
+  scope                = "${azurerm_kubernetes_cluster.aks.id}/namespaces/flowforge-dev"
+  role_definition_name = "Azure Kubernetes Service RBAC Reader"
+  principal_id         = var.devtest_group_object_id
+}

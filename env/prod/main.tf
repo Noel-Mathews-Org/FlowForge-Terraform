@@ -51,7 +51,7 @@ module "firewall" {
   env                        = var.environment
   hub_vnet_name              = module.hub_network.hub_vnet_name
   fw_subnet_cidr             = var.fw_subnet_cidr
-  log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
+  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
   aks_subnet_id              = module.spoke_network.aks_subnet_id
   pe_subnet_id               = module.spoke_network.pe_subnet_id
   db_subnet_id               = module.spoke_network.db_subnet_id
@@ -71,7 +71,7 @@ module "vpn_gateway" {
   env                        = var.environment
   hub_vnet_name              = module.hub_network.hub_vnet_name
   gateway_subnet_cidr        = var.gateway_subnet_cidr
-  log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
+  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
   vpn_client_address_pool    = var.vpn_client_address_pool
   entra_tenant_id            = data.azurerm_client_config.current.tenant_id
   entra_audience             = var.entra_audience
@@ -87,7 +87,7 @@ module "app_gateway" {
   location                   = var.location
   env                        = var.environment
   appgw_subnet_id            = module.spoke_network.appgw_subnet_id
-  log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
+  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
   tags                       = var.tags
 }
 
@@ -99,7 +99,7 @@ module "aks" {
   aks_subnet_id              = module.spoke_network.aks_subnet_id
   appgw_id                   = module.app_gateway.appgw_id
   spoke_vnet_id              = module.spoke_network.spoke_vnet_id
-  log_analytics_workspace_id = module.hub_network.log_analytics_workspace_id
+  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
   private_dns_zone_id        = module.hub_network.private_dns_zone_aks_id
   kubernetes_version         = var.kubernetes_version
   sku_tier                   = var.aks_sku_tier
@@ -111,6 +111,8 @@ module "aks" {
   spoke_resource_group_name  = data.azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   aks_outbound_type          = "userDefinedRouting"
+  devops_group_object_id     = var.devops_group_object_id
+  devtest_group_object_id    = var.devtest_group_object_id
   depends_on = [
     module.firewall,
     azurerm_virtual_network_peering.spoke_to_hub,
@@ -133,7 +135,7 @@ module "databases" {
   postgres_storage_mb          = var.postgres_storage_mb
   postgres_storage_tier        = var.postgres_storage_tier
   redis_enterprise_sku         = var.redis_enterprise_sku
-  log_analytics_workspace_id   = module.hub_network.log_analytics_workspace_id
+  log_analytics_workspace_id   = module.monitoring.log_analytics_workspace_id
   postgres_admin_username      = var.postgres_admin_username
   postgres_admin_password      = var.postgres_admin_password
   postgres_server_name         = "pgsql-${random_string.suffix.result}"
@@ -142,35 +144,45 @@ module "databases" {
 }
 
 module "monitoring" {
-  source              = "../../modules/monitoring"
-  env                 = var.environment
-  resource_group_name = data.azurerm_resource_group.main.name
-  appgw_id            = module.app_gateway.appgw_id
-  postgres_id         = module.databases.postgres_id
-  redis_id            = module.databases.redis_id
-  kv_id               = data.azurerm_key_vault.kv["prod"].id
-  alert_email         = var.alert_email
+  source                 = "../../modules/monitoring"
+  env                    = var.environment
+  location               = var.location
+  resource_group_name    = data.azurerm_resource_group.main.name
+  appgw_id               = module.app_gateway.appgw_id
+  postgres_id            = module.databases.postgres_id
+  redis_id               = module.databases.redis_id
+  kv_id                  = module.key_vault["prod"].kv_id
+  alert_email            = var.alert_email
+  devops_group_object_id = var.devops_group_object_id
+  tags                   = var.tags
 }
 
-data "azurerm_key_vault" "kv" {
-  for_each            = toset(local.environments)
-  name                = "kvlt-${each.key}-m9mp04"
-  resource_group_name = data.azurerm_resource_group.main.name
+module "key_vault" {
+  source   = "../../modules/key_vault"
+  for_each = toset(local.environments)
+
+  resource_group_name        = data.azurerm_resource_group.main.name
+  location                   = var.location
+  env                        = each.key
+  pe_subnet_id               = module.spoke_network.pe_subnet_id
+  private_dns_zone_kv_id     = module.hub_network.private_dns_zone_kv_id
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  key_vault_name             = "kvlt-${each.key}-${random_string.suffix.result}"
+  tags                       = var.tags
 }
 
 module "storage" {
   source   = "../../modules/storage"
   for_each = toset(local.environments)
 
-  resource_group_name               = data.azurerm_resource_group.main.name
-  location                          = var.location
-  env                               = each.key
-  pe_subnet_id                      = module.spoke_network.pe_subnet_id
-  private_dns_zone_storage_id       = module.hub_network.private_dns_zone_storage_id
-  log_analytics_workspace_id        = module.hub_network.log_analytics_workspace_id
-  aks_managed_identity_principal_id = data.azurerm_user_assigned_identity.app_identity[each.key].principal_id
-  storage_account_name              = "${random_string.suffix.result}ff${each.key}"
-  tags                              = var.tags
+  resource_group_name         = data.azurerm_resource_group.main.name
+  location                    = var.location
+  env                         = each.key
+  pe_subnet_id                = module.spoke_network.pe_subnet_id
+  private_dns_zone_storage_id = module.hub_network.private_dns_zone_storage_id
+  log_analytics_workspace_id  = module.monitoring.log_analytics_workspace_id
+  storage_account_name        = "${random_string.suffix.result}ff${each.key}"
+  tags                        = var.tags
 }
 
 resource "azurerm_virtual_network_peering" "spoke_to_hub" {
@@ -222,6 +234,19 @@ data "azurerm_container_registry" "acr" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 
+resource "azurerm_role_assignment" "aks_acr_pull" {
+  scope                = data.azurerm_container_registry.acr.id
+  role_definition_name = "AcrPull" # AKS need to Pull images
+  principal_id         = module.aks.kubelet_identity_object_id
+}
+
+resource "azurerm_role_assignment" "github_acr_push" {
+  scope                = data.azurerm_container_registry.acr.id
+  role_definition_name = "AcrPush" # CI pipeline need to push image to ACR
+  principal_id         = data.azurerm_user_assigned_identity.github_actions.principal_id
+}
+
+
 locals {
   microservices = ["frontend", "gateway", "auth-service", "project-service", "task-service", "notification-worker"]
   environments  = ["dev", "prod"]
@@ -250,23 +275,12 @@ resource "azurerm_federated_identity_credential" "app_fid" {
   subject                   = "system:serviceaccount:flowforge-${each.value.env}:flowforge-${each.value.env}-${each.value.svc}"
 }
 
-resource "azurerm_role_assignment" "aks_acr_pull" {
-  scope                = data.azurerm_container_registry.acr.id
-  role_definition_name = "AcrPull" # AKS need to Pull images
-  principal_id         = module.aks.kubelet_identity_object_id
-}
-
 
 data "azurerm_user_assigned_identity" "github_actions" {
   name                = "mi-github-actions-prod"
   resource_group_name = data.azurerm_resource_group.main.name
 }
 
-resource "azurerm_role_assignment" "github_acr_push" {
-  scope                = data.azurerm_container_registry.acr.id
-  role_definition_name = "AcrPush" # CI pipeline need to push image to ACR
-  principal_id         = data.azurerm_user_assigned_identity.github_actions.principal_id
-}
 
 resource "azurerm_federated_identity_credential" "github_fid_dev_branch" {
   name                      = "fid-github-Cloud-Track-dev"
@@ -342,7 +356,7 @@ resource "azurerm_role_assignment" "ai_openai_user" {
 
 resource "azurerm_role_assignment" "ai_kv_secrets_user" {
   for_each             = toset(local.environments)
-  scope                = data.azurerm_key_vault.kv[each.key].id
+  scope                = module.key_vault[each.key].kv_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = data.azurerm_user_assigned_identity.ai_identity[each.key].principal_id
 }
@@ -354,14 +368,38 @@ resource "azurerm_role_assignment" "ai_storage_blob_data_contributor" {
   principal_id         = data.azurerm_user_assigned_identity.ai_identity[each.key].principal_id
 }
 
-resource "azurerm_role_assignment" "aks_cluster_admin" {
-  scope                = module.aks.aks_id
-  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
-  principal_id         = var.devops_group_object_id
+resource "azurerm_role_assignment" "app_storage_blob_data_contributor" {
+  for_each             = toset(local.environments)
+  scope                = module.storage[each.key].storage_account_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.app_identity[each.key].principal_id
 }
 
-resource "azurerm_role_assignment" "aks_devtest_reader" {
-  scope                = "${module.aks.aks_id}/namespaces/flowforge-dev"
-  role_definition_name = "Azure Kubernetes Service RBAC Reader"
-  principal_id         = var.devtest_group_object_id
+
+resource "azurerm_role_assignment" "app_kv_secrets_user" {
+  for_each             = toset(local.environments)
+  scope                = module.key_vault[each.key].kv_id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = data.azurerm_user_assigned_identity.app_identity[each.key].principal_id
+}
+
+
+resource "azurerm_role_assignment" "arc_kv_secrets_officer" {
+  for_each             = toset(local.environments)
+  scope                = module.key_vault[each.key].kv_id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = data.azurerm_user_assigned_identity.arc_identity.principal_id
+}
+
+resource "azurerm_monitor_diagnostic_setting" "kv_diag" {
+  for_each                   = toset(local.environments)
+  name                       = "diag-kv-${each.key}"
+  target_resource_id         = module.key_vault[each.key].kv_id
+  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+
+  depends_on = [module.key_vault, module.monitoring]
 }

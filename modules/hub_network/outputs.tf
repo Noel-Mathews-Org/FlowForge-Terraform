@@ -10,9 +10,6 @@ output "bastion_subnet_id" {
 output "management_subnet_id" {
   value = azurerm_subnet.management.id
 }
-output "log_analytics_workspace_id" {
-  value = azurerm_log_analytics_workspace.law.id
-}
 output "private_dns_zone_kv_id" {
   value = azurerm_private_dns_zone.kv.id
 }
@@ -27,9 +24,4 @@ output "private_dns_zone_redis_id" {
 }
 output "private_dns_zone_aks_id" {
   value = azurerm_private_dns_zone.aks.id
-}
-
-output "app_insights_connection_string" {
-  value     = azurerm_application_insights.appinsights.connection_string
-  sensitive = true
 }

@@ -5,11 +5,11 @@ output "app_identity_client_ids" {
 
 
 output "keyvault_names" {
-  value = { for k, v in data.azurerm_key_vault.kv : k => v.name }
+  value = { for k, v in module.key_vault : k => v.kv_name }
 }
 
 output "keyvault_uris" {
-  value = { for k, v in data.azurerm_key_vault.kv : k => v.vault_uri }
+  value = { for k, v in module.key_vault : k => v.kv_vault_uri }
 }
 
 output "storage_account_names" {
@@ -47,7 +47,7 @@ output "aks_kubeconfig_command" {
 }
 
 output "app_insights_connection_string" {
-  value     = module.hub_network.app_insights_connection_string
+  value     = module.monitoring.app_insights_connection_string
   sensitive = true
 }
 

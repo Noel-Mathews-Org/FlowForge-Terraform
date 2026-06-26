@@ -23,29 +23,6 @@ resource "azurerm_subnet" "management" {
   address_prefixes     = [var.management_subnet_cidr]
 }
 
-resource "azurerm_log_analytics_workspace" "law" {
-  name                = "law-${var.env}-hub"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  sku                 = "PerGB2018"
-  retention_in_days   = 30
-  tags = merge({
-    Env   = var.env
-    Layer = "hub ${var.env}"
-  }, var.tags)
-}
-
-resource "azurerm_application_insights" "appinsights" {
-  name                = "appi-${var.env}-hub"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  workspace_id        = azurerm_log_analytics_workspace.law.id
-  application_type    = "web"
-  tags = merge({
-    Env   = var.env
-    Layer = "hub ${var.env}"
-  }, var.tags)
-}
 
 resource "azurerm_private_dns_zone" "aks" {
   name                = "privatelink.${var.location}.azmk8s.io"
@@ -60,8 +37,66 @@ resource "azurerm_private_dns_zone_virtual_network_link" "hub_aks" {
   registration_enabled  = false
 }
 
-resource "azurerm_role_assignment" "law_reader" {
-  scope                = azurerm_log_analytics_workspace.law.id
-  role_definition_name = "Log Analytics Reader"
-  principal_id         = var.devops_group_object_id
+resource "azurerm_private_dns_zone" "kv" {
+  name                = "privatelink.vaultcore.azure.net"
+  resource_group_name = var.resource_group_name
+  tags = merge({
+    Env   = var.env
+    Layer = "hub"
+  }, var.tags)
+}
+
+resource "azurerm_private_dns_zone" "storage" {
+  name                = "privatelink.blob.core.windows.net"
+  resource_group_name = var.resource_group_name
+  tags = merge({
+    Env   = var.env
+    Layer = "hub"
+  }, var.tags)
+}
+
+resource "azurerm_private_dns_zone" "postgres" {
+  name                = "privatelink.postgres.database.azure.com"
+  resource_group_name = var.resource_group_name
+  tags = merge({
+    Env   = var.env
+    Layer = "hub"
+  }, var.tags)
+}
+
+resource "azurerm_private_dns_zone" "redis" {
+  name                = "privatelink.redis.azure.net"
+  resource_group_name = var.resource_group_name
+  tags = merge({
+    Env   = var.env
+    Layer = "hub"
+  }, var.tags)
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "hub_kv" {
+  name                  = "hub-link-kv"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.kv.name
+  virtual_network_id    = azurerm_virtual_network.hub.id
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "hub_storage" {
+  name                  = "hub-link-storage"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.storage.name
+  virtual_network_id    = azurerm_virtual_network.hub.id
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "hub_postgres" {
+  name                  = "hub-link-postgres"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.postgres.name
+  virtual_network_id    = azurerm_virtual_network.hub.id
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "hub_redis" {
+  name                  = "hub-link-redis"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.redis.name
+  virtual_network_id    = azurerm_virtual_network.hub.id
 }

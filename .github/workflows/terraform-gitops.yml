@@ -24,20 +24,23 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       env_name: ${{ steps.set-env.outputs.env_name }}
+      gh_env: ${{ steps.set-env.outputs.gh_env }}
     steps:
       - id: set-env
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.base_ref }}" == "main" ]]; then
             echo "env_name=prod" >> $GITHUB_OUTPUT
+            echo "gh_env=prod-create" >> $GITHUB_OUTPUT
           else
             echo "env_name=dev" >> $GITHUB_OUTPUT
+            echo "gh_env=dev-create" >> $GITHUB_OUTPUT
           fi
 
   terraform-ci:
     name: "Terraform CI (Plan & Scan)"
     runs-on: ubuntu-latest
     needs: determine-env
-    environment: ${{ needs.determine-env.outputs.env_name }}
+    environment: ${{ needs.determine-env.outputs.gh_env }}
     outputs:
       checkov_passed: ${{ steps.checkov-parse.outputs.passed }}
       checkov_failed: ${{ steps.checkov-parse.outputs.failed }}
@@ -164,7 +167,8 @@ jobs:
     name: "Terraform CD (Apply)"
     runs-on: ubuntu-latest
     needs: [determine-env, terraform-ci]
-    environment: ${{ needs.determine-env.outputs.env_name }}
+    # Github Environment Deployment Protection Rules
+    environment: ${{ needs.determine-env.outputs.gh_env }}
     env:
       TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
       TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}

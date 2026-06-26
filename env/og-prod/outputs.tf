@@ -3,7 +3,6 @@ output "app_identity_client_ids" {
   value       = { for k, v in azurerm_user_assigned_identity.app_identity : k => v.client_id }
 }
 
-
 output "keyvault_names" {
   value = { for k, v in module.key_vault : k => v.kv_name }
 }
@@ -18,12 +17,12 @@ output "storage_account_names" {
 
 output "acr_name" {
   description = "Name of the Azure Container Registry"
-  value       = data.azurerm_container_registry.acr.name
+  value       = azurerm_container_registry.acr.name
 }
 
 output "acr_login_server" {
   description = "Login server of the Azure Container Registry"
-  value       = data.azurerm_container_registry.acr.login_server
+  value       = azurerm_container_registry.acr.login_server
 }
 
 output "github_actions_client_id" {
@@ -47,7 +46,7 @@ output "aks_kubeconfig_command" {
 }
 
 output "app_insights_connection_string" {
-  value     = module.hub_network.app_insights_connection_string
+  value     = module.monitoring.app_insights_connection_string
   sensitive = true
 }
 

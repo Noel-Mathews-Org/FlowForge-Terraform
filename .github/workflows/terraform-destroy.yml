@@ -42,7 +42,7 @@ jobs:
     name: "Terraform Plan Destroy (${{ inputs.environment }})"
     runs-on: ubuntu-latest
     needs: validate-input
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment }}-destroy
     env:
       TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
       TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
@@ -95,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-input, terraform-plan-destroy]
     # GitHub Environment protection rules act as the approval gate
-    environment: "${{ inputs.environment }}"
+    environment: "${{ inputs.environment }}-destroy"
     env:
       TF_VAR_postgres_admin_username: ${{ secrets.POSTGRES_ADMIN_USERNAME }}
       TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
