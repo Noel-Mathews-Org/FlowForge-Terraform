@@ -31,18 +31,6 @@ resource "azurerm_role_assignment" "law_reader" {
 }
 
 
-resource "azurerm_log_analytics_workspace_table" "container_log_v2" {
-  workspace_id = azurerm_log_analytics_workspace.law.id
-  name         = "ContainerLogV2"
-  plan         = "Basic"
-}
-
-resource "azurerm_log_analytics_workspace_table" "container_log" {
-  workspace_id = azurerm_log_analytics_workspace.law.id
-  name         = "ContainerLog"
-  plan         = "Basic"
-}
-
 
 resource "azurerm_monitor_action_group" "main" {
   name                = "ag-flowforge-${var.env}"
