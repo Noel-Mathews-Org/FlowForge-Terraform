@@ -161,14 +161,14 @@ module "key_vault" {
   source   = "../../modules/key_vault"
   for_each = toset(local.environments)
 
-  resource_group_name        = data.azurerm_resource_group.main.name
-  location                   = var.location
-  env                        = each.key
-  pe_subnet_id               = module.spoke_network.pe_subnet_id
-  private_dns_zone_kv_id     = module.hub_network.private_dns_zone_kv_id
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
-  key_vault_name             = "kvlt-${each.key}-${random_string.suffix.result}"
-  tags                       = var.tags
+  resource_group_name    = data.azurerm_resource_group.main.name
+  location               = var.location
+  env                    = each.key
+  pe_subnet_id           = module.spoke_network.pe_subnet_id
+  private_dns_zone_kv_id = module.hub_network.private_dns_zone_kv_id
+  tenant_id              = data.azurerm_client_config.current.tenant_id
+  key_vault_name         = "kvlt-${each.key}-${random_string.suffix.result}"
+  tags                   = var.tags
 }
 
 module "storage" {

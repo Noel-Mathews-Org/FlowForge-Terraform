@@ -3,8 +3,8 @@ resource "azurerm_log_analytics_workspace" "law" {
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "PerGB2018"
-  retention_in_days   = 7     
-  daily_quota_gb      = 1      
+  retention_in_days   = 30
+  daily_quota_gb      = 1
   tags = merge({
     Env   = var.env
     Layer = "hub ${var.env}"
