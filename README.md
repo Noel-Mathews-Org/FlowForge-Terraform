@@ -4,6 +4,7 @@ This document is the **Single Source of Truth** for setting up and deploying the
 
 ---
 
+
 ## 1. Architectural Overview & The Single Physical Environment Strategy
 
 We use an Enterprise GitOps CI/CD model powered by GitHub Environments.
