@@ -20,11 +20,26 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   administrator_login    = var.postgres_admin_username
   administrator_password = var.postgres_admin_password
 
+  authentication {
+    active_directory_auth_enabled = true
+    password_auth_enabled         = true
+    tenant_id                     = var.tenant_id
+  }
+
   tags = merge({ Env = var.env, Layer = "data" }, var.tags)
 
   lifecycle {
     ignore_changes = [zone]
   }
+}
+
+resource "azurerm_postgresql_flexible_server_active_directory_administrator" "admin" {
+  server_name         = azurerm_postgresql_flexible_server.postgres.name
+  resource_group_name = var.resource_group_name
+  tenant_id           = var.tenant_id
+  object_id           = var.devops_group_object_id
+  principal_name      = "DevOps_Admin_Group"
+  principal_type      = "Group"
 }
 
 resource "azurerm_postgresql_flexible_server_database" "db_dev" {
@@ -55,7 +70,7 @@ resource "azurerm_managed_redis" "redis" {
   default_database {
     clustering_policy                  = "EnterpriseCluster"
     eviction_policy                    = "VolatileLRU"
-    access_keys_authentication_enabled = true
+    access_keys_authentication_enabled = false
   }
 }
 

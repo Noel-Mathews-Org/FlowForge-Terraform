@@ -20,3 +20,11 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "tenant_id" {
+  type = string
+}
+
+variable "devops_group_object_id" {
+  type = string
+}

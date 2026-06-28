@@ -141,7 +141,10 @@ module "databases" {
   postgres_server_name         = "pgsql-${random_string.suffix.result}"
   redis_cache_name             = "redis-${random_string.suffix.result}"
   tags                         = var.tags
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
+  devops_group_object_id       = var.devops_group_object_id
 }
+
 
 module "monitoring" {
   source                 = "../../modules/monitoring"
@@ -389,6 +392,18 @@ resource "azurerm_role_assignment" "arc_kv_secrets_officer" {
   scope                = module.key_vault[each.key].kv_id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_user_assigned_identity.arc_identity.principal_id
+}
+
+resource "azurerm_role_assignment" "redis_app_contributor" {
+  scope                = module.databases.redis_id
+  role_definition_name = "Redis Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.app_identity[var.environment].principal_id
+}
+
+resource "azurerm_role_assignment" "redis_ai_contributor" {
+  scope                = module.databases.redis_id
+  role_definition_name = "Redis Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.ai_identity[var.environment].principal_id
 }
 
 resource "azurerm_monitor_diagnostic_setting" "kv_diag" {
