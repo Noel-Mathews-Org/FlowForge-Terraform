@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-setup-sql
+data:
+  setup.sql: |
+    -- Create all Entra ID roles from the 'postgres' database where pgaadauth exists
+    \c postgres
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mi-flowforge-app-dev') THEN
+        PERFORM pgaadauth_create_principal('mi-flowforge-app-dev', false, false);
+      END IF;
+    END
+    $$;
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mi-ai-dev-m9mp04') THEN
+        PERFORM pgaadauth_create_principal('mi-ai-dev-m9mp04', false, false);
+      END IF;
+    END
+    $$;
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mi-flowforge-app-prod') THEN
+        PERFORM pgaadauth_create_principal('mi-flowforge-app-prod', false, false);
+      END IF;
+    END
+    $$;
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mi-ai-prod-m9mp04') THEN
+        PERFORM pgaadauth_create_principal('mi-ai-prod-m9mp04', false, false);
+      END IF;
+    END
+    $$;
+
+    -- Setup flowforge-dev database permissions
+    \c flowforge-dev
+    
+    GRANT CONNECT ON DATABASE "flowforge-dev" TO "mi-flowforge-app-dev";
+    GRANT ALL ON SCHEMA public TO "mi-flowforge-app-dev";
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO "mi-flowforge-app-dev";
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "mi-flowforge-app-dev";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "mi-flowforge-app-dev";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "mi-flowforge-app-dev";
+
+    GRANT CONNECT ON DATABASE "flowforge-dev" TO "mi-ai-dev-m9mp04";
+    GRANT ALL ON SCHEMA public TO "mi-ai-dev-m9mp04";
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO "mi-ai-dev-m9mp04";
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "mi-ai-dev-m9mp04";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "mi-ai-dev-m9mp04";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "mi-ai-dev-m9mp04";
+
+    -- Setup flowforge-prod database permissions
+    \c flowforge-prod
+
+    GRANT CONNECT ON DATABASE "flowforge-prod" TO "mi-flowforge-app-prod";
+    GRANT ALL ON SCHEMA public TO "mi-flowforge-app-prod";
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO "mi-flowforge-app-prod";
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "mi-flowforge-app-prod";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "mi-flowforge-app-prod";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "mi-flowforge-app-prod";
+
+    GRANT CONNECT ON DATABASE "flowforge-prod" TO "mi-ai-prod-m9mp04";
+    GRANT ALL ON SCHEMA public TO "mi-ai-prod-m9mp04";
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO "mi-ai-prod-m9mp04";
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "mi-ai-prod-m9mp04";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "mi-ai-prod-m9mp04";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "mi-ai-prod-m9mp04";
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-setup-job-v2
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+      - name: psql
+        image: postgres:15-alpine
+        command:
+        - "/bin/sh"
+        - "-c"
+        - "psql -h pgsql-22o4pc.postgres.database.azure.com -U FlowForge-DevOps -d postgres -f /scripts/setup.sql"
+        env:
+        - name: PGPASSWORD
+          value: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6ImFGa21LVkZjLTRXVjZzWENCdk5aa1hJNTA1WSIsImtpZCI6ImFGa21LVkZjLTRXVjZzWENCdk5aa1hJNTA1WSJ9.eyJhdWQiOiJodHRwczovL29zc3JkYm1zLWFhZC5kYXRhYmFzZS53aW5kb3dzLm5ldCIsImlzcyI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0L2Q4NTM3MzM0LWJjMjQtNGRhZi05NWE4LWJmNGM5ZmIxNDM5NC8iLCJpYXQiOjE3ODI2NTY3NTcsIm5iZiI6MTc4MjY1Njc1NywiZXhwIjoxNzgyNjYyMjYzLCJhY3IiOiIxIiwiYWlvIjoiQVhRQWkvOGNBQUFBcWtzMDIwSVdyYmZubEw4NmZ3eitZY0pxdkpXVHAxQ2xrelk1UGxyYWpON05EWm9oQW51Y0E4M2I0UW1zNEVmWjlSSUIrZVJzRHFYZlpXcGYvTzdiSHBxc3poMFVuUk9RTS9jSloyODV5b3V5RG10ZVdIRWFLdGlkM0RSZDR4Yi8vYUpINThUK0I1YVFvUVRDNzgyZkx3PT0iLCJhbXIiOlsicHdkIiwibWZhIl0sImFwcGlkIjoiMDRiMDc3OTUtOGRkYi00NjFhLWJiZWUtMDJmOWUxYmY3YjQ2IiwiYXBwaWRhY3IiOiIwIiwiZ3JvdXBzIjpbImViMjQxM2ZkLTk5ZDgtNDc4MC04MjNmLTM0MDgzYjdlMjg0NCIsIjJlOGNhYjY0LTJjZTAtNDFjMC1iODllLTNlMjk3OThmMWQ5MSIsIjc2NDA0YjhmLWY0YzktNDYyNy1iOTIyLWNlMWY2ZThmNjE5NyJdLCJpZHR5cCI6InVzZXIiLCJpcGFkZHIiOiIxMTYuNjguNzQuNzYiLCJuYW1lIjoiVXNlci0xMCIsIm9pZCI6IjMwZWUxYTVlLTQ0MmItNGVkNC1hNzFhLThmYmJkNWQ5MDVlNCIsInB1aWQiOiIxMDAzMjAwNUQ5MTFCMkVCIiwicmgiOiIxLkFjWUFOSE5UMkNTOHIwMlZxTDlNbjdGRGxGRFlQQkxmMmIxQWxOWEo4SHRfb2dNQUFKX0dBQS4iLCJzY3AiOiJ1c2VyX2ltcGVyc29uYXRpb24iLCJzaWQiOiIwMDVmZGIyYS1mOTRlLTE5OTAtOTliMi1kOTk1NTRiODRhMTUiLCJzdWIiOiI4TllxOHNTcHV5NkhlN0pHbGxUNkFOdTliMVVsdmd2MVI0QUZmM3VVeV84IiwidGlkIjoiZDg1MzczMzQtYmMyNC00ZGFmLTk1YTgtYmY0YzlmYjE0Mzk0IiwidW5pcXVlX25hbWUiOiJVc2VyLTEwQG11cmFsaWNzZTE5ODRnbWFpbC5vbm1pY3Jvc29mdC5jb20iLCJ1cG4iOiJVc2VyLTEwQG11cmFsaWNzZTE5ODRnbWFpbC5vbm1pY3Jvc29mdC5jb20iLCJ1dGkiOiIteUc1MklJRHpFdWtvbGduS2h3N0FBIiwidmVyIjoiMS4wIiwieG1zX2FjdF9mY3QiOiIzIDUiLCJ4bXNfZnRkIjoiYTFqbTQ4STVOdlFNMDl0OHVNTjhVTnNWb2QzVElXVWNsRjlRVEFGUHBpOEJZWE5wWVhOdmRYUm9aV0Z6ZEMxa2MyMXoiLCJ4bXNfaWRyZWwiOiIxIDIiLCJ4bXNfc3ViX2ZjdCI6IjMgNCJ9.gOhQc4ZU3Vy19FyHSLWJCwl-MbBhCwDeyXXxfT5ijiTTSeMLf7Vd4Nm-jZcdURP_YwCneHcJtocrq0CmDPji4oKzqjuXsIoRwKNGvgk7AN610Dgn3guuu8sjLx6BveVdyAAH7VcdUvObFsCDNrvw8JNfTIcz6_zhu_nmW8vEzaC1CR6qI_BkWTCB0qe4bD5UjwKDzmnTXtf1AlDNUSLISnmVf6Ar9Jf0ZQi5iY5zmklXx8Pv74LzJRv8vx9Gx90JrqUxXiPVQ9AlKpgKDRX1xDmVjQRIquDsNM6qO2P_H9LpqdpuRYlExS4qVoOBYivu9wouI49myPElyyvgad1ixQ"
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      restartPolicy: Never
+      volumes:
+      - name: scripts
+        configMap:
+          name: db-setup-sql
