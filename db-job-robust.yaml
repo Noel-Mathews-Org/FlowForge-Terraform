@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-setup-sql
+data:
+  setup.sql: |
+    -- Create all Entra ID roles from the 'postgres' database where pgaadauth exists
+    \c postgres
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mi-flowforge-app-dev') THEN
+        PERFORM pgaadauth_create_principal('mi-flowforge-app-dev', false, false);
+      END IF;
+    END
+    $$;
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mi-ai-dev-m9mp04') THEN
+        PERFORM pgaadauth_create_principal('mi-ai-dev-m9mp04', false, false);
+      END IF;
+    END
+    $$;
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mi-flowforge-app-prod') THEN
+        PERFORM pgaadauth_create_principal('mi-flowforge-app-prod', false, false);
+      END IF;
+    END
+    $$;
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mi-ai-prod-m9mp04') THEN
+        PERFORM pgaadauth_create_principal('mi-ai-prod-m9mp04', false, false);
+      END IF;
+    END
+    $$;
+
+    -- Setup flowforge-dev database permissions
+    \c flowforge-dev
+    
+    GRANT CONNECT ON DATABASE "flowforge-dev" TO "mi-flowforge-app-dev";
+    GRANT USAGE ON SCHEMA public TO "mi-flowforge-app-dev";
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO "mi-flowforge-app-dev";
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "mi-flowforge-app-dev";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "mi-flowforge-app-dev";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "mi-flowforge-app-dev";
+
+    GRANT CONNECT ON DATABASE "flowforge-dev" TO "mi-ai-dev-m9mp04";
+    GRANT USAGE ON SCHEMA public TO "mi-ai-dev-m9mp04";
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO "mi-ai-dev-m9mp04";
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "mi-ai-dev-m9mp04";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "mi-ai-dev-m9mp04";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "mi-ai-dev-m9mp04";
+
+    -- Setup flowforge-prod database permissions
+    \c flowforge-prod
+
+    GRANT CONNECT ON DATABASE "flowforge-prod" TO "mi-flowforge-app-prod";
+    GRANT USAGE ON SCHEMA public TO "mi-flowforge-app-prod";
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO "mi-flowforge-app-prod";
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "mi-flowforge-app-prod";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "mi-flowforge-app-prod";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "mi-flowforge-app-prod";
+
+    GRANT CONNECT ON DATABASE "flowforge-prod" TO "mi-ai-prod-m9mp04";
+    GRANT USAGE ON SCHEMA public TO "mi-ai-prod-m9mp04";
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO "mi-ai-prod-m9mp04";
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "mi-ai-prod-m9mp04";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "mi-ai-prod-m9mp04";
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "mi-ai-prod-m9mp04";
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-setup-job-v2
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+      - name: psql
+        image: postgres:15-alpine
+        command:
+        - "/bin/sh"
+        - "-c"
+        - "psql -h pgsql-22o4pc.postgres.database.azure.com -U FlowForge-DevOps -d postgres -f /scripts/setup.sql"
+        env:
+        - name: PGPASSWORD
+          value: "__TOKEN__"
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      restartPolicy: Never
+      volumes:
+      - name: scripts
+        configMap:
+          name: db-setup-sql
