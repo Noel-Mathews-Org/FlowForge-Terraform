@@ -25,6 +25,14 @@ variable "tenant_id" {
   type = string
 }
 
-variable "devops_group_object_id" {
+variable "entra_admin_object_id" {
+  type = string
+}
+
+variable "entra_admin_principal_name" {
+  type = string
+}
+
+variable "entra_admin_principal_type" {
   type = string
 }

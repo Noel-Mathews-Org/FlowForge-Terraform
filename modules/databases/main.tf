@@ -37,9 +37,9 @@ resource "azurerm_postgresql_flexible_server_active_directory_administrator" "ad
   server_name         = azurerm_postgresql_flexible_server.postgres.name
   resource_group_name = var.resource_group_name
   tenant_id           = var.tenant_id
-  object_id           = var.devops_group_object_id
-  principal_name      = "DevOps_Admin_Group"
-  principal_type      = "Group"
+  object_id           = var.entra_admin_object_id
+  principal_name      = var.entra_admin_principal_name
+  principal_type      = var.entra_admin_principal_type
 }
 
 resource "azurerm_postgresql_flexible_server_database" "db_dev" {
@@ -70,7 +70,7 @@ resource "azurerm_managed_redis" "redis" {
   default_database {
     clustering_policy                  = "EnterpriseCluster"
     eviction_policy                    = "VolatileLRU"
-    access_keys_authentication_enabled = false
+    access_keys_authentication_enabled = true
   }
 }
 

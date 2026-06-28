@@ -142,7 +142,9 @@ module "databases" {
   redis_cache_name             = "redis-${random_string.suffix.result}"
   tags                         = var.tags
   tenant_id                    = data.azurerm_client_config.current.tenant_id
-  devops_group_object_id       = var.devops_group_object_id
+  entra_admin_object_id        = var.devops_group_object_id
+  entra_admin_principal_name   = "FlowForge-DevOps"
+  entra_admin_principal_type   = "Group"
 }
 
 
