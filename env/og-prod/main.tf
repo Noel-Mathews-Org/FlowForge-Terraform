@@ -54,7 +54,6 @@ module "firewall" {
   log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
   aks_subnet_id              = module.spoke_network.aks_subnet_id
   pe_subnet_id               = module.spoke_network.pe_subnet_id
-  db_subnet_id               = module.spoke_network.db_subnet_id
   aks_allowed_fqdns          = var.aks_allowed_fqdns
   hub_vnet_cidr              = var.hub_vnet_cidr
   spoke_vnet_cidr            = var.spoke_vnet_cidr
