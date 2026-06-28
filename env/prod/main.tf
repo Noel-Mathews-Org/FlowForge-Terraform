@@ -396,18 +396,6 @@ resource "azurerm_role_assignment" "arc_kv_secrets_officer" {
   principal_id         = data.azurerm_user_assigned_identity.arc_identity.principal_id
 }
 
-resource "azurerm_role_assignment" "redis_app_contributor" {
-  scope                = module.databases.redis_id
-  role_definition_name = "Redis Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.app_identity[var.environment].principal_id
-}
-
-resource "azurerm_role_assignment" "redis_ai_contributor" {
-  scope                = module.databases.redis_id
-  role_definition_name = "Redis Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.ai_identity[var.environment].principal_id
-}
-
 resource "azurerm_monitor_diagnostic_setting" "kv_diag" {
   for_each                   = toset(local.environments)
   name                       = "diag-kv-${each.key}"
