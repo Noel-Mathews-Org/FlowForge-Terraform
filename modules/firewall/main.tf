@@ -126,6 +126,13 @@ resource "azurerm_firewall_policy_rule_collection_group" "fw_policy_rcg" {
       destination_ports     = ["123"]
       protocols             = ["UDP"]
     }
+    rule {
+      name                  = "AllowDB_to_EntraID"
+      source_addresses      = [var.db_subnet_cidr]
+      destination_addresses = ["AzureActiveDirectory"]
+      destination_ports     = ["443"]
+      protocols             = ["TCP"]
+    }
   }
 
   network_rule_collection {

@@ -9,6 +9,7 @@ variable "pe_subnet_id" { type = string }
 variable "db_subnet_id" { type = string }
 variable "aks_allowed_fqdns" { type = list(string) }
 variable "aks_subnet_cidr" { type = string }
+variable "db_subnet_cidr" { type = string }
 
 variable "hub_vnet_cidr" { type = string }
 variable "spoke_vnet_cidr" { type = string }

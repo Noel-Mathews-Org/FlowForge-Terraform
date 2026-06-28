@@ -61,6 +61,7 @@ module "firewall" {
   vpn_client_address_pool    = var.vpn_client_address_pool
   hub_vnet_id                = module.hub_network.hub_vnet_id
   aks_subnet_cidr            = var.aks_subnet_cidr
+  db_subnet_cidr             = var.db_subnet_cidr
   tags                       = var.tags
 }
 

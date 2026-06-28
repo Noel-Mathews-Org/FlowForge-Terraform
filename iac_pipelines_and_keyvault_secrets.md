@@ -96,3 +96,16 @@ The following secrets must be populated in the target GitHub Environment (`dev` 
 4. Add the `KEYVAULT_NAME` as an **Environment Variable**.
 5. Add all the required application values as **Environment Secrets**.
 6. Go to the **Actions** tab, select **Update Key Vault Secrets**, click **Run workflow**, and select your target environment.
+
+
+Go to Microsoft Entra ID.
+On the left menu, click App registrations and select the App Registration that your pipeline uses.
+In the App Registration's left menu, click API permissions.
+Click the + Add a permission button.
+Click on Microsoft Graph.
+Select Application permissions (this is important; do not select Delegated).
+In the search box, type Directory.Read.All.
+Expand the Directory section and check the box for Directory.Read.All.
+Click Add permissions at the bottom.
+CRITICAL STEP: Once the permission is added, it will have an orange warning triangle saying "Not granted". You MUST click the button right above the list that says Grant admin consent for [Your Tenant Name] and confirm it by clicking Yes. The status should change to a green checkmark.
+Once you have granted Admin Consent for Directory.Read.All, your App Registration will have the necessary permissions to validate the Entra ID group. You can re-run your Terraform pipeline and the PostgreSQL administrator will be created successfully!
