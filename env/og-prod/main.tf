@@ -255,7 +255,7 @@ resource "azurerm_role_assignment" "github_acr_push" {
 
 
 locals {
-  microservices = ["frontend", "gateway", "auth-service", "project-service", "task-service", "notification-worker"]
+  microservices = ["gateway", "auth-service", "project-service", "task-service", "notification-worker"]
   environments  = ["dev", "prod"]
   fid_combinations = flatten([
     for env in local.environments : [
