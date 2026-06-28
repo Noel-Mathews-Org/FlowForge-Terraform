@@ -178,7 +178,6 @@ resource "azurerm_subnet_route_table_association" "pe" {
   route_table_id = azurerm_route_table.spoke_rt.id
 }
 
-.
 resource "azurerm_route_table" "db_rt" {
   name                          = "rt-db-${var.env}"
   location                      = var.location
