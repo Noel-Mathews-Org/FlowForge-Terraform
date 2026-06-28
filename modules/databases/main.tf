@@ -33,12 +33,6 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   }
 }
 
-resource "azurerm_postgresql_flexible_server_configuration" "pgaadauth_ext" {
-  name      = "azure.extensions"
-  server_id = azurerm_postgresql_flexible_server.postgres.id
-  value     = "pgaadauth"
-}
-
 resource "azurerm_postgresql_flexible_server_active_directory_administrator" "admin" {
   server_name         = azurerm_postgresql_flexible_server.postgres.name
   resource_group_name = var.resource_group_name
