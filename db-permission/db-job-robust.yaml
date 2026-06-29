@@ -88,7 +88,7 @@ spec:
         command:
         - "/bin/sh"
         - "-c"
-        - "psql -h pgsql-22o4pc.postgres.database.azure.com -U FlowForge-DevOps -d postgres -f /scripts/setup.sql"
+        - "psql -h pgsql-40xtuj.postgres.database.azure.com -U FlowForge-DevOps -d postgres -f /scripts/setup.sql"
         env:
         - name: PGPASSWORD
           value: "__TOKEN__"
