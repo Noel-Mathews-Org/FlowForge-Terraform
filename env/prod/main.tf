@@ -175,6 +175,20 @@ module "key_vault" {
   tags                   = var.tags
 }
 
+resource "azurerm_monitor_diagnostic_setting" "kv_diag" {
+  for_each                   = toset(local.environments)
+  name                       = "diag-kv-${each.key}"
+  target_resource_id         = module.key_vault[each.key].kv_id
+  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+
+  depends_on = [module.key_vault, module.monitoring]
+}
+
+
 module "storage" {
   source   = "../../modules/storage"
   for_each = toset(local.environments)
@@ -395,15 +409,4 @@ resource "azurerm_role_assignment" "arc_kv_secrets_officer" {
   principal_id         = data.azurerm_user_assigned_identity.arc_identity.principal_id
 }
 
-resource "azurerm_monitor_diagnostic_setting" "kv_diag" {
-  for_each                   = toset(local.environments)
-  name                       = "diag-kv-${each.key}"
-  target_resource_id         = module.key_vault[each.key].kv_id
-  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
 
-  enabled_log {
-    category = "AuditEvent"
-  }
-
-  depends_on = [module.key_vault, module.monitoring]
-}

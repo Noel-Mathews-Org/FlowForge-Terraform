@@ -11,7 +11,7 @@ resource "azurerm_storage_account" "sa" {
 }
 
 resource "azurerm_storage_container" "app_data" {
-  name                  = "app-data"
+  name                  = "flowforge-reports"
   storage_account_id    = azurerm_storage_account.sa.id
   container_access_type = "private"
 }

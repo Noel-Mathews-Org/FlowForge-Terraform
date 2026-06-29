@@ -52,7 +52,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type                 = "VirtualMachineScaleSets"
     zones                = var.aks_system_zones
     max_pods             = 50
-    #only_critical_addons_enabled = true
   }
 
   identity {
